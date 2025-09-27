@@ -10,7 +10,18 @@
 	// "features": {},
 
 	// For use with PHP or Apache (e.g.php -S localhost:8080 or apache2ctl start)
-	"forwardPorts": [8080, 3306]
+	"forwardPorts": [8080, 3306],
+
+	"portsAttributes": {
+		"3306": {
+			"label": "MariaDB",
+			"onAutoForward": "silent"
+		},
+		"8080": {
+			"label": "Web Server",
+			"onAutoForward": "silent"
+		}
+	},
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "sudo chmod a+x \"$(pwd)\" && sudo rm -rf /var/www/html && sudo ln -s \"$(pwd)\" /var/www/html"
@@ -20,4 +31,8 @@
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
+
+	"containerEnv": {
+		"WEB_SERVER_PORT": "8080"
+	}
 }
