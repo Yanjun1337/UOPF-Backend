@@ -1,5 +1,4 @@
 {
-    "name": "uopf",
     "type": "project",
     "autoload": {
         "psr-4": {
