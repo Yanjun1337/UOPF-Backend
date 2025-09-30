@@ -11,5 +11,7 @@
             "email": "y_deng1@u.pacific.edu"
         }
     ],
-    "require": {}
+    "require": {
+        "vlucas/phpdotenv": "^5.6"
+    }
 }

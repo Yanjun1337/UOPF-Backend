@@ -28,3 +28,6 @@ if (!file_exists(ROOT . 'vendor/autoload.php')) {
 
 // Load autoloaders and libraries.
 require( ROOT . 'vendor/autoload.php' );
+
+// Set up runtime environment.
+Services::configureEnvironment();
