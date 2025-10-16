@@ -108,7 +108,7 @@ final class Services {
         static::getInstance();
     }
 
-    public static function getInstance(): self {
+    public static function getInstance(): static {
         if (!isset(static::$instance))
             static::$instance = new static();
 
