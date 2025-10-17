@@ -99,16 +99,16 @@ final class Services {
 
     protected static function connectDatabase(): Database {
         if (!isset($_ENV['UOPF_DB_HOST']))
-            throw new Exception('Database host is require.');
+            throw new Exception('Database host is required.');
 
         if (!isset($_ENV['UOPF_DB_NAME']))
-            throw new Exception('Database name is require.');
+            throw new Exception('Database name is required.');
 
         if (!isset($_ENV['UOPF_DB_USERNAME']))
-            throw new Exception('Database username is require.');
+            throw new Exception('Database username is required.');
 
         if (!isset($_ENV['UOPF_DB_PASSWORD']))
-            throw new Exception('Database password is require.');
+            throw new Exception('Database password is required.');
 
         return new Database([
             'type' => 'mariadb',
