@@ -3,8 +3,16 @@ declare(strict_types=1);
 namespace UOPF;
 
 use PDO;
-use Dotenv\Dotenv;
 use Exception;
+use Dotenv\Dotenv;
+use UOPF\Routing\Route;
+use UOPF\Routing\Router;
+use Symfony\Component\HttpKernel\HttpKernel;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
+use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 
 /**
  * Service Manager
@@ -14,6 +22,11 @@ final class Services {
      * The database manager.
      */
     public readonly Database $database;
+
+    /**
+     * The router.
+     */
+    protected Router $router;
 
     /**
      * The single instance of service manager.
@@ -27,6 +40,57 @@ final class Services {
             $message = $exception->getMessage();
             static::terminate("Failed to connect to database ($message).");
         }
+    }
+
+    public function serve(Request $request): void {
+        $dispatcher = new EventDispatcher();
+        $controllerResolver = new ControllerResolver();
+        $requestStack = new RequestStack();
+        $argumentResolver = new ArgumentResolver();
+
+        $kernel = new HttpKernel(
+            $dispatcher,
+            $controllerResolver,
+            $requestStack,
+            $argumentResolver
+        );
+
+        $request->attributes->set('_controller', [$this, 'getResponse']);
+        $response = $kernel->handle($request);
+
+        $response->send();
+        $kernel->terminate($request, $response);
+    }
+
+    public function getResponse(Request $request): Response {
+        if ($matched = $this->getRouter()->match($request)) {
+            $controller = $matched->route->controller;
+            return $controller();
+        } else {
+            return $this->getNotFoundResponse();
+        }
+    }
+
+    public function getHomeResponse(): Response {
+        return $this->getNotFoundResponse();
+    }
+
+    public function getNotFoundResponse(): Response {
+        return new Response('<h1>404 Not Found.</h1>', 404);
+    }
+
+    protected function getRouter(): Router {
+        if (isset($this->router))
+            return $this->router;
+
+        $this->router = new Router();
+
+        $this->router->register(new Route(
+            '',
+            [$this, 'getHomeResponse']
+        ));
+
+        return $this->router;
     }
 
     public static function isDevelopment(): bool {
@@ -105,7 +169,8 @@ final class Services {
     }
 
     public static function serveRequest(): void {
-        static::getInstance();
+        $request = Request::createFromGlobals();
+        static::getInstance()->serve( $request );
     }
 
     public static function getInstance(): static {

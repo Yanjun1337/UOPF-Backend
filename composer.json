@@ -13,6 +13,7 @@
     ],
     "require": {
         "vlucas/phpdotenv": "^5.6",
-        "catfan/medoo": "^2.2"
+        "catfan/medoo": "^2.2",
+        "symfony/http-kernel": "^7.3"
     }
 }
