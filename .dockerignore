@@ -1,0 +1,13 @@
+Dockerfile
+.dockerignore
+
+.git
+.gitignore
+.gitattributes
+
+.vscode
+.devcontainer
+
+vendor
+variable
+**/.DS_Store
