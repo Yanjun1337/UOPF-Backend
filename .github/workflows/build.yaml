@@ -13,9 +13,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      IMAGE: ghcr.io/${{ github.repository }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -33,6 +30,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image name
+        run: echo "IMAGE=${RAW_IMAGE,,}" >> ${GITHUB_ENV}
+
+        env:
+          RAW_IMAGE: ghcr.io/${{ github.repository }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
