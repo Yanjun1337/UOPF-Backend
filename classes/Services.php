@@ -3,10 +3,11 @@ declare(strict_types=1);
 namespace UOPF;
 
 use PDO;
-use Exception;
 use Dotenv\Dotenv;
 use UOPF\Routing\Route;
 use UOPF\Routing\Router;
+use UOPF\Cache\Variable as VariableCache;
+use UOPF\Cache\Redis as RedisCache;
 use Symfony\Component\HttpKernel\HttpKernel;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -18,6 +19,11 @@ use Symfony\Component\HttpKernel\Controller\ControllerResolver;
  * Service Manager
  */
 final class Services {
+    /**
+     * The cache manager.
+     */
+    public readonly Cache $cache;
+
     /**
      * The database manager.
      */
@@ -34,8 +40,17 @@ final class Services {
     protected static self $instance;
 
     protected function __construct() {
+        // Connect to the cache engine.
         try {
-            $this->database = $this->connectDatabase();
+            $this->cache = static::connectCache();
+        } catch ( \Exception $exception ) {
+            $message = $exception->getMessage();
+            static::terminate("Failed to connect to cache engine ($message).");
+        }
+
+        // Connect to the database.
+        try {
+            $this->database = static::connectDatabase();
         } catch ( \Exception $exception ) {
             $message = $exception->getMessage();
             static::terminate("Failed to connect to database ($message).");
@@ -95,6 +110,27 @@ final class Services {
 
     public static function isDevelopment(): bool {
         return isset($_ENV['UOPF_ENV']) && $_ENV['UOPF_ENV'] === 'development';
+    }
+
+    protected static function connectCache(): Cache {
+        switch ($_ENV['UOPF_CACHE_ENGINE'] ?? 'variable') {
+            case 'variable':
+                return new VariableCache();
+
+            case 'redis':
+                if (!isset($_ENV['UOPF_CACHE_REDIS_HOST']))
+                    throw new Exception('Redis host is required.');
+
+                return new RedisCache(
+                    $_ENV['UOPF_CACHE_REDIS_HOST'],
+                    isset($_ENV['UOPF_CACHE_REDIS_PORT']) ? intval($_ENV['UOPF_CACHE_REDIS_PORT']) : 6379,
+                    $_ENV['UOPF_CACHE_REDIS_PASSWORD'] ?? null,
+                    isset($_ENV['UOPF_CACHE_REDIS_DATABASE']) ? intval($_ENV['UOPF_CACHE_REDIS_DATABASE']) : null
+                );
+
+            default:
+                throw new Exception('Cache engine is invalid.');
+        }
     }
 
     protected static function connectDatabase(): Database {
