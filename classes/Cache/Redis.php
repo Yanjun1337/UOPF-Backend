@@ -21,18 +21,22 @@ final class Redis extends Cache {
         null|string|array $password = null,
         ?int $database = null
     ) {
-        // 1. Create the instance of Redis.
+        // 1. Check whether the PHP extension of Redis is installed.
+        if (!class_exists('Redis'))
+            throw new Exception('PHP Redis extension is required.');
+
+        // 2. Create the instance of Redis.
         $this->redis = new PHPRedis();
 
-        // 2. Connect to Redis server.
+        // 3. Connect to Redis server.
         if (!$this->redis->connect($host, $port))
             throw new Exception('Failed to connect to Redis server.');
 
-        // 3. Authenticate the connection.
+        // 4. Authenticate the connection.
         if ($password !== null && !$this->redis->auth($password))
             throw new Exception('Failed to authenticate the connection.');
 
-        // 4. Select the specified database.
+        // 5. Select the specified database.
         if ($database !== null && !$this->redis->select($database))
             throw new Exception('Failed to select the specified database.');
     }
