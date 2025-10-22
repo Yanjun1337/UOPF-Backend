@@ -189,7 +189,7 @@ final class Services {
         $production->safeLoad();
     }
 
-    protected static function terminate( string $message ): never {
+    protected static function terminate(string $message): never {
         if (in_array(\PHP_SAPI, ['cli', 'phpdbg'], true)) {
             echo "ERROR: {$message}\n";
             exit(1);
