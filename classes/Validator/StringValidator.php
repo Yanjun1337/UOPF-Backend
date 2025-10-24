@@ -17,7 +17,7 @@ final class StringValidator extends Validator {
 
     public function filter(mixed $value): string {
         if (!is_scalar($value))
-            throw new ValidationException('The value is not convertible to string.');
+            throw new ValidationException('Value cannot be converted to a string.');
 
         if (!is_string($value))
             $value = strval($value);
