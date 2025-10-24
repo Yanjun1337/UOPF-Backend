@@ -54,7 +54,7 @@ final class StringValidator extends Validator {
                     break;
 
                 default:
-                    throw new ValidatorException('Unsupported format.');
+                    throw new ValidatorException('Unsupported string format.');
             }
         }
 
