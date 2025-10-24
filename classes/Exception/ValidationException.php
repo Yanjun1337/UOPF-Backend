@@ -4,4 +4,4 @@ namespace UOPF\Exception;
 
 use UOPF\Exception;
 
-final class ValidationException extends Exception {}
+class ValidationException extends Exception {}
