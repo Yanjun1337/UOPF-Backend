@@ -1,0 +1,9 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+// Load UOPF.
+require( __DIR__ . '/uopf.php' );
+
+// Load CLI.
+UOPF\Services::getInstance()->loadCLI();

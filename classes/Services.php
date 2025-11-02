@@ -3,11 +3,13 @@ declare(strict_types=1);
 namespace UOPF;
 
 use PDO;
+use PDOException;
 use Dotenv\Dotenv;
 use UOPF\Routing\Route;
 use UOPF\Routing\Router;
 use UOPF\Cache\Variable as VariableCache;
 use UOPF\Cache\Redis as RedisCache;
+use UOPF\Manager\Metadata as MetadataManager;
 use Symfony\Component\HttpKernel\HttpKernel;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -28,6 +30,11 @@ final class Services {
      * The database manager.
      */
     public readonly Database $database;
+
+    /**
+     * The system metadata manager.
+     */
+    public readonly MetadataManager $systemMetadataManager;
 
     /**
      * The router.
@@ -55,9 +62,26 @@ final class Services {
             $message = $exception->getMessage();
             static::terminate("Failed to connect to database ($message).");
         }
+
+        // Initialize managers of data tables.
+        $this->systemMetadataManager = new MetadataManager('system');
+    }
+
+    public function isInitialized(): bool {
+        try {
+            return $this->systemMetadataManager->get('initialized') !== null;
+        } catch (PDOException $exception) {
+            if ($exception->getCode() === '42S02')
+                return false;
+            else
+                throw $exception;
+        }
     }
 
     public function serve(Request $request): void {
+        if (!$this->isInitialized())
+            $this->terminate('UOPF has not been initialized yet.');
+
         $dispatcher = new EventDispatcher();
         $controllerResolver = new ControllerResolver();
         $requestStack = new RequestStack();
@@ -75,6 +99,15 @@ final class Services {
 
         $response->send();
         $kernel->terminate($request, $response);
+    }
+
+    public function loadCLI(): void {
+        try {
+            $instance = new CommandLineInterface();
+            $instance->run();
+        } catch (Exception $exception) {
+            $this->terminate($exception->getMessage());
+        }
     }
 
     public function getResponse(Request $request): Response {
