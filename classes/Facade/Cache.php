@@ -7,7 +7,7 @@ use UOPF\Facade;
 use UOPF\Services;
 
 /**
- * Facade
+ * Facade for Cache
  */
 final class Cache extends Facade {
     public static function getInstance(): Service {

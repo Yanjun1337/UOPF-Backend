@@ -7,7 +7,7 @@ use UOPF\Services;
 use UOPF\Database as Service;
 
 /**
- * Facade
+ * Facade for Database
  */
 final class Database extends Facade {
     public static function getInstance(): Service {
