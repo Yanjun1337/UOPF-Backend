@@ -49,7 +49,13 @@ abstract class Manager {
      */
     public function createEntry(array $data): Model {
         return Database::transaction(function () use ($data) {
-            $this->insertEntry($data);
+            $id = $this->insertEntry($data);
+            $conditions = [static::getModelClass()::getIdentifierField() => $id];
+
+            if ($entry = $this->findEntryDirectly($conditions))
+                return $entry;
+            else
+                throw new Exception('Failed to fetch the created entry.');
         });
     }
 

@@ -9,6 +9,7 @@ use UOPF\Routing\Route;
 use UOPF\Routing\Router;
 use UOPF\Cache\Variable as VariableCache;
 use UOPF\Cache\Redis as RedisCache;
+use UOPF\Manager\User as UserManager;
 use UOPF\Manager\Metadata as MetadataManager;
 use Symfony\Component\HttpKernel\HttpKernel;
 use Symfony\Component\HttpFoundation\Response;
@@ -32,9 +33,19 @@ final class Services {
     public readonly Database $database;
 
     /**
+     * The user manager.
+     */
+    public readonly UserManager $userManager;
+
+    /**
      * The system metadata manager.
      */
     public readonly MetadataManager $systemMetadataManager;
+
+    /**
+     * The user metadata manager.
+     */
+    public readonly MetadataManager $userMetadataManager;
 
     /**
      * The router.
@@ -64,7 +75,11 @@ final class Services {
         }
 
         // Initialize managers of data tables.
+        $this->userManager = new UserManager();
+
+        // Initialize managers of metadata data tables.
         $this->systemMetadataManager = new MetadataManager('system');
+        $this->userMetadataManager = new MetadataManager('user');
     }
 
     public function isInitialized(): bool {

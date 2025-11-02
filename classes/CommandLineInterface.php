@@ -2,6 +2,11 @@
 declare(strict_types=1);
 namespace UOPF;
 
+use UOPF\Validator\StringValidator;
+use UOPF\Validator\DictionaryValidator;
+use UOPF\Validator\DictionaryValidatorElement;
+use UOPF\Exception\DictionaryValidationException;
+use PragmaRX\Random\Random;
 use splitbrain\phpcli\CLI;
 use splitbrain\phpcli\Options;
 
@@ -13,9 +18,53 @@ final class CommandLineInterface extends CLI {
     }
 
     protected function main(Options $options) {
-        if ($options->getCmd() === 'init')
-            Initializer::initialize();
-        else
+        if ($options->getCmd() === 'init') {
+            try {
+                $filtered = (new DictionaryValidator([
+                    'email' => new DictionaryValidatorElement(
+                        label: 'Email Address',
+                        required: true,
+
+                        validator: new StringValidator(
+                            max: 128,
+                            format: 'email'
+                        )
+                    ),
+
+                    'username' => new DictionaryValidatorElement(
+                        label: 'Username',
+                        required: true,
+
+                        validator: new StringValidator(
+                            allowEmpty: false,
+                            max: 128,
+                            regex: '[a-zA-Z0-9_\-]*'
+                        )
+                    )
+                ]))->filter([
+                    'email' => $options->getOpt('email'),
+                    'username' => $options->getOpt('username')
+                ]);
+            } catch (DictionaryValidationException $exception) {
+                throw new Exception($exception->getLabeledMessage());
+            }
+
+            $random = new Random();
+            $password = $random->get();
+
+            Initializer::initialize(
+                email: $filtered['email'],
+                username: $filtered['username'],
+                password: $password
+            );
+
+            $message = "UOPF is initialized successfully!\n\n";
+            $message .= "Password for the default administrator ({$filtered['username']}) is:\n";
+            $message .= $password;
+
+            $this->info($message);
+        } else {
             echo $options->help();
+        }
     }
 }

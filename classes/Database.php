@@ -13,6 +13,10 @@ final class Database extends Medoo {
      */
     protected int $transactionNestingLevel = 0;
 
+    public function getCurrentTime(): string {
+        return gmdate('Y-m-d H:i:s');
+    }
+
     public function transaction(callable $callback): mixed {
         if ($this->transactionNestingLevel === 0) {
             $this->pdo->beginTransaction();
