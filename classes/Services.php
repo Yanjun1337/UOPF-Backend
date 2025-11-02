@@ -239,7 +239,7 @@ final class Services {
 
     public static function serveRequest(): void {
         $request = Request::createFromGlobals();
-        static::getInstance()->serve( $request );
+        static::getInstance()->serve($request);
     }
 
     public static function getInstance(): static {
