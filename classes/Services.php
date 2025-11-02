@@ -78,8 +78,8 @@ final class Services {
         $this->userManager = new UserManager();
 
         // Initialize managers of metadata data tables.
-        $this->systemMetadataManager = new MetadataManager('system');
-        $this->userMetadataManager = new MetadataManager('user');
+        $this->systemMetadataManager = new MetadataManager('s');
+        $this->userMetadataManager = new MetadataManager('u');
     }
 
     public function isInitialized(): bool {
