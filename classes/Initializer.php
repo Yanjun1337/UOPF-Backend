@@ -94,7 +94,7 @@ CREATE TABLE `users` (
         return [
             'frontendAddress' => 'https://www.example.com/',
             'backendAddress' => 'https://api.example.com/',
-            'time' => time(),
+            'initialized' => time(),
             'tokenKey' => $key
         ];
     }
