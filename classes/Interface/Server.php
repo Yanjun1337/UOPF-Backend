@@ -71,6 +71,9 @@ final class Server {
         $router = $this->getRouter();
 
         if ($matched = $router->match($request)) {
+            if ($response->canonicalize($matched, $request))
+                return $response;
+
             $controller = $matched->route->controller;
 
             try {
