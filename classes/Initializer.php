@@ -8,6 +8,7 @@ use UOPF\Facade\Database;
 use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\Metadata\System as SystemMetadata;
 use UOPF\Exception\DatabaseException;
+use PragmaRX\Random\Random;
 
 abstract class Initializer {
     public static function initialize(
@@ -28,7 +29,8 @@ abstract class Initializer {
         }
 
         // 3. Create system metadata.
-        SystemMetadata::add('initialized', time());
+        foreach (static::getInitialMetadata() as $name => $value)
+            SystemMetadata::add($name, $value);
 
         // 4. Create the default administrator user.
         UserManager::register(
@@ -83,5 +85,17 @@ CREATE TABLE `users` (
     UNIQUE KEY `email` (`email`)
 ) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
         ");
+    }
+
+    protected static function getInitialMetadata(): array {
+        $random = new Random();
+        $key = $random->pattern('[a-zA-Z0-9_]')->size(256)->get();
+
+        return [
+            'frontendAddress' => 'https://www.example.com/',
+            'backendAddress' => 'https://api.example.com/',
+            'time' => time(),
+            'tokenKey' => $key
+        ];
     }
 }
