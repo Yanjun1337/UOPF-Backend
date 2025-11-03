@@ -4,19 +4,19 @@ namespace UOPF;
 
 use PDO;
 use PDOException;
-use Dotenv\Dotenv;
+use UOPF\Cache\Redis as RedisCache;
+use UOPF\Cache\Variable as VariableCache;
 use UOPF\Routing\Route;
 use UOPF\Routing\Router;
-use UOPF\Cache\Variable as VariableCache;
-use UOPF\Cache\Redis as RedisCache;
 use UOPF\Manager\User as UserManager;
 use UOPF\Manager\Metadata as MetadataManager;
+use UOPF\Interface\Server as InterfaceServer;
+use Dotenv\Dotenv;
 use Symfony\Component\HttpKernel\HttpKernel;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Service Manager
@@ -128,7 +128,7 @@ final class Services {
     public function getResponse(Request $request): Response {
         if ($matched = $this->getRouter()->match($request)) {
             $controller = $matched->route->controller;
-            return $controller();
+            return $controller($request);
         } else {
             return $this->getNotFoundResponse();
         }
@@ -136,6 +136,11 @@ final class Services {
 
     public function getHomeResponse(): Response {
         return $this->getNotFoundResponse();
+    }
+
+    public function getInterfaceResponse(Request $request): Response {
+        $instance = new InterfaceServer('v1/');
+        return $instance->getResponse($request);
     }
 
     public function getNotFoundResponse(): Response {
@@ -151,6 +156,11 @@ final class Services {
         $this->router->register(new Route(
             '',
             [$this, 'getHomeResponse']
+        ));
+
+        $this->router->register(new Route(
+            'v1/(?P<route>.+)',
+            [$this, 'getInterfaceResponse']
         ));
 
         return $this->router;
