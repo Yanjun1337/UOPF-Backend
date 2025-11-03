@@ -5,7 +5,6 @@ namespace UOPF\Interface;
 use UOPF\Request;
 use UOPF\Services;
 use UOPF\Response;
-use UOPF\Exception;
 use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
 use UOPF\Routing\Route;
 use UOPF\Routing\Router;
@@ -70,18 +69,18 @@ final class Server {
         $response = new Response(headers: $headers);
         $router = $this->getRouter();
 
-        if ($matched = $router->match($request)) {
+        try {
+            if (!$matched = $router->match($request))
+                throw new Exception('Not found.', 404);
+
             if ($response->canonicalize($matched, $request))
                 return $response;
 
             $controller = $matched->route->controller;
-
-            try {
-                $content = $controller($request, $response);
-                $response->setContent(json_encode($content));
-            } catch (Exception $exception) {
-                $response->setStatusCode(500);
-            }
+            $content = $controller($request, $response);
+            $response->setContent(json_encode($content));
+        } catch (Exception $exception) {
+            $exception->renderTo($response);
         }
 
         return $response;
