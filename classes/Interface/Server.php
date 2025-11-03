@@ -81,6 +81,18 @@ final class Server {
             $response->setContent(json_encode($content));
         } catch (Exception $exception) {
             $exception->renderTo($response);
+        } catch (\Exception $exception) {
+            if (Services::isDevelopment()) {
+                $data = ['exception' => [
+                    'message' => $exception->getMessage(),
+                    'code' => $exception->getCode()
+                ]];
+            } else {
+                $data = [];
+            }
+
+            $interfaceException = new Exception('Internal server error.', 500, $data);
+            $interfaceException->renderTo($response);
         }
 
         return $response;
