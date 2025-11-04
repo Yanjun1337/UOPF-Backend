@@ -97,6 +97,12 @@ final class Services {
         if (!$this->isInitialized())
             $this->terminate('UOPF has not been initialized yet.');
 
+        if (
+            (($token = $request->headers->get('X-API-Token')) !== null) &&
+            ($user = $this->userManager->parseEntryFromToken($token))
+        )
+            $request->setUser($user);
+
         $dispatcher = new EventDispatcher();
         $controllerResolver = new ControllerResolver();
         $requestStack = new RequestStack();

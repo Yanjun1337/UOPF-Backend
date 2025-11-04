@@ -5,6 +5,10 @@ namespace UOPF\Interface;
 use ReflectionClass;
 use UOPF\Request;
 use UOPF\Response;
+use UOPF\Model\User as UserModel;
+use UOPF\Validator\DictionaryValidator;
+use UOPF\Exception\DictionaryValidationException;
+use UOPF\Interface\Exception\ParameterException;
 
 /**
  * API Endpoint
@@ -70,6 +74,35 @@ abstract class Endpoint {
     }
 
     /**
+     * Returns the HTTP body of the incoming request after validation and filtering.
+     */
+    protected function filterBody(DictionaryValidator $validator): mixed {
+        try {
+            return $validator->filter($this->request->getPayload()->all());
+        } catch (DictionaryValidationException $exception) {
+            throw new ParameterException(
+                $exception->getLabeledMessage(),
+                $exception->elementKey
+            );
+        }
+    }
+
+    /**
+     * Checks whether a captcha is valid.
+     */
+    protected function isCaptchaValid(string $captcha): bool {
+        return true; // @TODO
+    }
+
+    /**
+     * Validates the captcha and throws an exception if it fails.
+     */
+    protected function validateCaptcha(string $captcha, ?string $field = 'captcha'): void {
+        if (!$this->isCaptchaValid($captcha))
+            throw new ParameterException('Invalid captcha.', $field);
+    }
+
+    /**
      * Throws a 'Method not supported' exception.
      */
     protected function throwMethodNotSupportedException(Response $response): never {
@@ -105,6 +138,11 @@ abstract class Endpoint {
         }
 
         return $allowed;
+    }
+
+    protected static function setTokenOnResponse(Response $response, UserModel $user, int $expirationTime): void {
+        $token = $user->calculateToken($expirationTime);
+        $response->headers->set('X-API-Token', $token);
     }
 
     /**

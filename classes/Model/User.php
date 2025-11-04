@@ -3,9 +3,52 @@ declare(strict_types=1);
 namespace UOPF\Model;
 
 use UOPF\Model;
+use UOPF\Exception;
 use UOPF\ModelFieldType;
+use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
+use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
 
 final class User extends Model {
+    public function getMetadata(string $name): mixed {
+        return UserMetadataManager::get($name, $this->data['id']);
+    }
+
+    public function calculateToken(int $expirationTime, ?string $seed = null): string {
+        $password = $this->getMetadata('password');
+
+        if (empty($password))
+            throw new Exception('User has no password.');
+
+        $tokenKey = SystemMetadataManager::get('tokenKey');
+
+        if (empty($tokenKey))
+            throw new Exception('Missing token key.');
+
+        if (!isset($seed))
+            $seed = bin2hex(random_bytes(16));
+
+        $components = [
+            static::getTokenAlgorithmVersion(),
+            $this->data['id'],
+            $password,
+            $expirationTime,
+            $seed
+        ];
+
+        $secret = hash_hmac(
+            'sha256',
+            implode('|', $components),
+            $tokenKey
+        );
+
+        return implode('|', [
+            $this->data['id'],
+            $expirationTime,
+            $seed,
+            $secret
+        ]);
+    }
+
     public static function getSchema(): array {
         return [
             'id' => ModelFieldType::integer,
@@ -23,5 +66,9 @@ final class User extends Model {
             '_likes' => ModelFieldType::integer,
             '_reposts' => ModelFieldType::integer
         ];
+    }
+
+    protected static function getTokenAlgorithmVersion(): int {
+        return 1;
     }
 }

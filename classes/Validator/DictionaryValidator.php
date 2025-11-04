@@ -31,7 +31,7 @@ final class DictionaryValidator extends Validator {
                 $elementValue = $value[$key];
             } else {
                 if ($element->isRequired())
-                    throw new DictionaryValidationException($label, 'Value must be provided.');
+                    throw new DictionaryValidationException($key, $label, 'Value must be provided.');
 
                 if (isset($element->default))
                     $elementValue = $element->default;
@@ -43,7 +43,7 @@ final class DictionaryValidator extends Validator {
                 try {
                     $elementValue = $element->validator->filter($elementValue);
                 } catch (ValidationException $exception) {
-                    throw new DictionaryValidationException($label, $exception->getMessage(), $exception->getCode(), $exception);
+                    throw new DictionaryValidationException($key, $label, $exception->getMessage(), $exception->getCode(), $exception);
                 }
             }
 

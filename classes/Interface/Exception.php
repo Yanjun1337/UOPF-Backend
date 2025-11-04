@@ -8,7 +8,7 @@ use UOPF\Response;
 /**
  * API Exception
  */
-final class Exception extends \Exception {
+class Exception extends \Exception {
     public function __construct(
         string $message = '',
         int $code = 0,

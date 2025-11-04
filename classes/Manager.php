@@ -100,4 +100,11 @@ abstract class Manager {
     public function fetchEntryDirectly(string|int|float|bool $value, string $field = 'id', ?DatabaseLockType $lock = null): ?Model {
         return $this->findEntryDirectly([$field => $value], $lock);
     }
+
+    /**
+     * Fetches an entry using a specific field.
+     */
+    public function fetchEntry(string|int|float|bool $value, string $field = 'id'): ?Model {
+        return $this->fetchEntryDirectly($value, $field); // @TODO
+    }
 }
