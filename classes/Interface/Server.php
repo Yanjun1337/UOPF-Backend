@@ -73,12 +73,11 @@ final class Server {
             if (!$matched = $router->match($request))
                 throw new Exception('Not found.', 404);
 
-            if ($response->canonicalize($matched, $request))
-                return $response;
-
-            $controller = $matched->route->controller;
-            $content = $controller($request, $response);
-            $response->setContent(json_encode($content));
+            if (!$response->canonicalize($matched, $request)) {
+                $controller = $matched->route->controller;
+                $content = $controller($request, $response);
+                $response->setContent(json_encode($content));
+            }
         } catch (Exception $exception) {
             $exception->renderTo($response);
         } catch (\Exception $exception) {
@@ -93,6 +92,19 @@ final class Server {
 
             $interfaceException = new Exception('Internal server error.', 500, $data);
             $interfaceException->renderTo($response);
+        }
+
+        $exposed = [];
+
+        foreach ($response->headers->allPreserveCase() as $name => $value)
+            if (strpos($name, 'X-API-') === 0)
+                $exposed[] = $name;
+
+        if ($exposed) {
+            $response->headers->set(
+                'Access-Control-Expose-Headers',
+                implode(', ', $exposed)
+            );
         }
 
         return $response;
