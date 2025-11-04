@@ -13,6 +13,10 @@ final class User extends Model {
         return UserMetadataManager::get($name, $this->data['id']);
     }
 
+    public function setMetadata(string $name, mixed $value): void {
+        UserMetadataManager::set($name, $value, $this->data['id']);
+    }
+
     public function calculateToken(int $expirationTime, ?string $seed = null): string {
         $password = $this->getMetadata('password');
 

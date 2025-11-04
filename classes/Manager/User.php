@@ -5,7 +5,6 @@ namespace UOPF\Manager;
 use UOPF\Manager;
 use UOPF\Model\User as Model;
 use UOPF\Facade\Database;
-use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
 use UOPF\Validator\StringValidator;
 use UOPF\Validator\IntegerValidator;
 use UOPF\Validator\DictionaryValidator;
@@ -117,7 +116,7 @@ final class User extends Manager {
 
             // 2. Insert metadata into the database.
             foreach ($metadata as $name => $value)
-                UserMetadataManager::add($name, $value, $created['id']);
+                $created->setMetadata($name, $value);
 
             // 3. Return the created user.
             return $created;
