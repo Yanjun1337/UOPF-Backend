@@ -11,5 +11,5 @@ enum ModelFieldType {
     case float;
     case boolean;
     case serialized;
-    case date;
+    case time;
 }

@@ -124,7 +124,7 @@ abstract class Model implements ArrayAccess {
             case ModelFieldType::serialized:
                 return unserialize($value);
 
-            case ModelFieldType::date:
+            case ModelFieldType::time:
                 return strtotime("{$value} GMT");
 
             default:

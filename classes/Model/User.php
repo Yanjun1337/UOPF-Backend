@@ -84,7 +84,7 @@ final class User extends Model {
             'domain' => ModelFieldType::string,
             'email' => ModelFieldType::string,
             'description' => ModelFieldType::string,
-            'registered' => ModelFieldType::date,
+            'registered' => ModelFieldType::time,
 
             '_followings' => ModelFieldType::integer,
             '_followers'  => ModelFieldType::integer,
