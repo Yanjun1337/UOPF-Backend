@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace UOPF\Interface;
 
 use ReflectionClass;
+use UOPF\Model;
 use UOPF\Captcha;
 use UOPF\Request;
 use UOPF\Response;
@@ -38,7 +39,10 @@ abstract class Endpoint {
             $this->throwMethodNotSupportedException($response);
 
         $callback = [$this, $methods[$method]];
-        return $callback($response);
+        $content = $callback($response);
+
+        $preprocessor = new Preprocessor($this);
+        return $preprocessor->preprocess($content);
     }
 
     /**
@@ -74,6 +78,46 @@ abstract class Endpoint {
      */
     public function options(Response $response): mixed {
         return [];
+    }
+
+    /**
+     * Checks whether it is in the administrative context.
+     */
+    public function isAdministrativeContext(): bool {
+        $context = $this->request->headers->get('X-API-Context');
+        return isset($context) && strtolower($context) === 'administration';
+    }
+
+    /**
+     * Checks whether it is in administrative mode.
+     */
+    public function isAdministrative(): bool {
+        if (!$this->isAdministrativeContext())
+            return false;
+
+        if (!isset($this->request->user))
+            return false;
+
+        if (!$this->request->user->isAdministrator())
+            return false;
+
+        return true;
+    }
+
+    /**
+     * Checks whether the current context has permission to edit an entry.
+     */
+    public function canEdit(Model $entry): bool {
+        if ($this->isAdministrative())
+            return true;
+
+        if (!isset($this->request->user))
+            return false;
+
+        if ($entry->canBeEditedBy($this->request->user))
+            return true;
+
+        return false;
     }
 
     /**

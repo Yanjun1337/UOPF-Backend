@@ -3,12 +3,30 @@ declare(strict_types=1);
 namespace UOPF\Model;
 
 use UOPF\Model;
+use UOPF\Utilities;
 use UOPF\Exception;
 use UOPF\ModelFieldType;
 use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
 use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
 
 final class User extends Model {
+    public function renderField(string $field): string {
+        switch ($field) {
+            case 'display_name':
+                return Utilities::escape($this->data[$field]);
+
+            case 'description':
+                return Utilities::wrapParagraphsAround(Utilities::escape($this->data[$field]));
+
+            default:
+                $this->throwsUnsupportedEditableFieldException();
+        }
+    }
+
+    public function canBeEditedBy(self $user): bool {
+        return $this->is($user);
+    }
+
     public function getMetadata(string $name): mixed {
         return UserMetadataManager::get($name, $this->data['id']);
     }
@@ -51,6 +69,10 @@ final class User extends Model {
             $seed,
             $secret
         ]);
+    }
+
+    public function isAdministrator(): bool {
+        return $this->data['role'] === 'administrator';
     }
 
     public static function getSchema(): array {

@@ -4,6 +4,7 @@ namespace UOPF\Interface\Endpoint;
 
 use UOPF\Response;
 use UOPF\Services;
+use UOPF\Model\User;
 use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
 use UOPF\Validator\DictionaryValidator;
@@ -29,7 +30,7 @@ final class Session extends Endpoint {
         return $payload;
     }
 
-    public function write(Response $response): int {
+    public function write(Response $response): User {
         $filtered = $this->filterBody(new DictionaryValidator([
             'account' => new DictionaryValidatorElement(
                 label: 'Account',
@@ -125,6 +126,6 @@ final class Session extends Endpoint {
         static::setTokenOnResponse($response, $user, time() + (60 * 60 * 24 * $days));
 
         $this->request->setUser($user);
-        return $user['id'];
+        return $user;
     }
 }

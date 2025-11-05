@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace UOPF;
 
 use ArrayAccess;
+use UOPF\Model\User;
 
 /**
  * Entry Data Model
@@ -30,6 +31,34 @@ abstract class Model implements ArrayAccess {
             throw new Exception('Missing identifier field within model.');
 
         $this->data = $data;
+    }
+
+    /**
+     * Renders an editable field.
+     */
+    public function renderField(string $field): string {
+        $this->throwsUnsupportedEditableFieldException();
+    }
+
+    /**
+     * Throws an unsupported editable field exception.
+     */
+    protected function throwsUnsupportedEditableFieldException(): never {
+        throw new Exception('Unsupported editable field.');
+    }
+
+    /**
+     * Checks whether a user has permission to edit this entity.
+     */
+    public function canBeEditedBy(User $user): bool {
+        return false;
+    }
+
+    /**
+     * Determines whether two instances represent the same entry.
+     */
+    public function is(self $entry): bool {
+        return $this->data['id'] === $entry['id'];
     }
 
     /**
@@ -76,6 +105,9 @@ abstract class Model implements ArrayAccess {
      * Resolves a field according to the schema.
      */
     protected static function resolveField(mixed $value, ModelFieldType $type): mixed {
+        if (!isset($value))
+            return null;
+
         switch ($type) {
             case ModelFieldType::string:
                 return strval($value);
