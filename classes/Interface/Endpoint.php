@@ -3,10 +3,13 @@ declare(strict_types=1);
 namespace UOPF\Interface;
 
 use ReflectionClass;
+use UOPF\Captcha;
 use UOPF\Request;
 use UOPF\Response;
+use UOPF\Services;
 use UOPF\Model\User as UserModel;
 use UOPF\Validator\DictionaryValidator;
+use UOPF\Exception\CaptchaException;
 use UOPF\Exception\DictionaryValidationException;
 use UOPF\Interface\Exception\ParameterException;
 
@@ -88,18 +91,25 @@ abstract class Endpoint {
     }
 
     /**
-     * Checks whether a captcha is valid.
-     */
-    protected function isCaptchaValid(string $captcha): bool {
-        return true; // @TODO
-    }
-
-    /**
      * Validates the captcha and throws an exception if it fails.
      */
     protected function validateCaptcha(string $captcha, ?string $field = 'captcha'): void {
-        if (!$this->isCaptchaValid($captcha))
-            throw new ParameterException('Invalid captcha.', $field);
+        $address = $this->request->getClientIp();
+
+        if (!isset($address))
+            throw new ParameterException('Unable to read the client IP address.');
+
+        try {
+            Captcha::validate($captcha, $address);
+        } catch (CaptchaException $exception) {
+            if (Services::isDevelopment())
+                $data = ['response' => $exception->response];
+            else
+                $data = [];
+
+            $message = $exception->getMessage();
+            throw new ParameterException($message, $field, $data, $exception);
+        }
     }
 
     /**

@@ -82,10 +82,18 @@ final class Server {
             $exception->renderTo($response);
         } catch (\Exception $exception) {
             if (Services::isDevelopment()) {
-                $data = ['exception' => [
-                    'message' => $exception->getMessage(),
-                    'code' => $exception->getCode()
-                ]];
+                $exceptions = [];
+
+                do {
+                    $exceptions[] = [
+                        'message' => $exception->getMessage(),
+                        'code' => $exception->getCode()
+                    ];
+
+                    $exception = $exception->getPrevious();
+                } while (isset($exception));
+
+                $data = compact('exceptions');
             } else {
                 $data = [];
             }

@@ -16,6 +16,7 @@
         "catfan/medoo": "^2.2",
         "symfony/http-kernel": "^7.3",
         "splitbrain/php-cli": "^1.3",
-        "pragmarx/random": "^0.2.2"
+        "pragmarx/random": "^0.2.2",
+        "guzzlehttp/guzzle": "^7.9"
     }
 }
