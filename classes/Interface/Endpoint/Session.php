@@ -11,6 +11,8 @@ use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\DictionaryValidatorElement;
 use UOPF\Validator\StringValidator;
 use UOPF\Validator\BooleanValidator;
+use UOPF\Validator\Extension\UsernameValidator;
+use UOPF\Validator\Extension\UserPasswordValidator;
 use UOPF\Interface\Endpoint;
 use UOPF\Interface\Exception\ParameterException;
 
@@ -37,7 +39,7 @@ final class Session extends Endpoint {
 
                 validator: new StringValidator(
                     allowEmpty: false,
-                    max: 128,
+                    max: 128
                 )
             ),
 
@@ -52,23 +54,13 @@ final class Session extends Endpoint {
 
             'username' => new DictionaryValidatorElement(
                 label: 'Username',
-
-                validator: new StringValidator(
-                    allowEmpty: false,
-                    max: 128,
-                    regex: '[a-zA-Z0-9_\-]*'
-                )
+                validator: new UsernameValidator()
             ),
 
             'password' => new DictionaryValidatorElement(
                 label: 'Password',
                 required: true,
-
-                validator: new StringValidator(
-                    allowEmpty: false,
-                    min: 6,
-                    max: 64
-                )
+                validator: new UserPasswordValidator()
             ),
 
             'remember' => new DictionaryValidatorElement(

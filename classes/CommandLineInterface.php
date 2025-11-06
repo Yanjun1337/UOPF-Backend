@@ -5,6 +5,7 @@ namespace UOPF;
 use UOPF\Validator\StringValidator;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\DictionaryValidatorElement;
+use UOPF\Validator\Extension\UsernameValidator;
 use UOPF\Exception\DictionaryValidationException;
 use PragmaRX\Random\Random;
 use splitbrain\phpcli\CLI;
@@ -34,12 +35,7 @@ final class CommandLineInterface extends CLI {
                     'username' => new DictionaryValidatorElement(
                         label: 'Username',
                         required: true,
-
-                        validator: new StringValidator(
-                            allowEmpty: false,
-                            max: 128,
-                            regex: '[a-zA-Z0-9_\-]*'
-                        )
+                        validator: new UsernameValidator()
                     )
                 ]))->filter([
                     'email' => $options->getOpt('email'),
