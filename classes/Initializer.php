@@ -100,6 +100,20 @@ CREATE TABLE `images` (
     UNIQUE KEY `file` (`file`),
     KEY `record` (`status`, `record`, `position`)
 ) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
+
+CREATE TABLE `cases` (
+	`id` bigint(20) unsigned NOT NULL auto_increment,
+	`user` bigint(20) unsigned,
+	`tag` varchar(191) NOT NULL,
+	`created` datetime NOT NULL,
+	`modified` datetime NOT NULL,
+	`type` varchar(20) NOT NULL,
+	`status` varchar(20) NOT NULL,
+	`metadata` longtext,
+
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `tag` (`type`, `tag`)
+) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
         ");
     }
 
