@@ -131,6 +131,12 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'posts/upload',
+            controller: ["{$prefix}PostsUpload", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 

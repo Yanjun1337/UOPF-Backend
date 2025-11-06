@@ -23,7 +23,7 @@ abstract class Initializer {
         try {
             Database::exec(static::getSchema());
         } catch (PDOException $exception) {
-            throw DatabaseException::createFromPDO($exception);
+            throw DatabaseException::createFromPDOException($exception);
         } finally {
             Cache::flush();
         }
@@ -83,6 +83,22 @@ CREATE TABLE `users` (
     UNIQUE KEY `display_name` (`display_name`),
     UNIQUE KEY `domain` (`domain`),
     UNIQUE KEY `email` (`email`)
+) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
+
+CREATE TABLE `images` (
+    `id` bigint( 20 ) unsigned NOT NULL auto_increment,
+    `status` varchar( 20 ) NOT NULL,
+    `file` varchar( 128 ) NOT NULL,
+    `created` datetime NOT NULL,
+    `modified` datetime NOT NULL,
+    `user` bigint( 20 ) unsigned,
+    `record` bigint( 20 ) unsigned,
+    `position` int( 11 ) unsigned,
+    `metadata` longtext NOT NULL,
+
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `file` (`file`),
+    KEY `record` (`status`, `record`, `position`)
 ) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
         ");
     }

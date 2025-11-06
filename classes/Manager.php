@@ -35,7 +35,7 @@ abstract class Manager {
         try {
             $statement = Database::insert($this->getTableName(), $data);
         } catch (PDOException $exception) {
-            throw DatabaseException::createFromPDO($exception);
+            throw DatabaseException::createFromPDOException($exception);
         }
 
         if ($statement->rowCount() !== 1)
@@ -69,7 +69,7 @@ abstract class Manager {
         try {
             Database::update(static::getTableName(), $data, $conditions);
         } catch (PDOException $exception) {
-            throw DatabaseException::createFromPDO($exception);
+            throw DatabaseException::createFromPDOException($exception);
         }
     }
 

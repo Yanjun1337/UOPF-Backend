@@ -5,6 +5,7 @@ namespace UOPF\Interface;
 use UOPF\Model;
 use UOPF\Exception as SystemException;
 use UOPF\Model\User as UserModel;
+use UOPF\Model\Image as ImageModel;
 
 /**
  * Return Data Preprocessor
@@ -32,6 +33,9 @@ final class Preprocessor {
         switch (true) {
             case $data instanceof UserModel:
                 return $this->preprocessUser($data);
+
+            case $data instanceof ImageModel:
+                return $this->preprocessImage($data);
 
             default:
                 static::throwUnprocessableException();
@@ -74,6 +78,28 @@ final class Preprocessor {
 
             $preprocessed['private'] = $private;
         }
+
+        return $preprocessed;
+    }
+
+    protected function preprocessImage(ImageModel $image): array {
+        $preprocessed = [
+            'id' => $image['id'],
+            'created' => $image['created'],
+            'type' => $image['metadata']['type'],
+            'source' => $image->getSource(),
+
+            'size' => [
+                'width' => $image['metadata']['width'],
+                'height' => $image['metadata']['height']
+            ]
+        ];
+
+        if (isset($image['user']))
+            $preprocessed['user'] = $image['user'];
+
+        if ($this->context->isAdministrative() && isset($image['record']))
+            $preprocessed['record'] = $image['record'];
 
         return $preprocessed;
     }

@@ -8,6 +8,7 @@ use UOPF\Captcha;
 use UOPF\Request;
 use UOPF\Response;
 use UOPF\Services;
+use UOPF\Exception as UOPFException;
 use UOPF\Model\User as UserModel;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Exception\CaptchaException;
@@ -157,7 +158,7 @@ abstract class Endpoint {
     }
 
     /**
-     * Throws a 'Method not supported' exception.
+     * Throws a "Method not allowed" exception.
      */
     protected function throwMethodNotSupportedException(Response $response): never {
         $methods = $this->getAllowedMethods();
@@ -170,6 +171,20 @@ abstract class Endpoint {
 
         $response->headers->set('Allow', implode(', ', $methods));
         throw new Exception('Method not allowed.', 405);
+    }
+
+    /**
+     * Throws an "Unauthorized" exception.
+     */
+    protected function throwUnauthorizedException(): never {
+        throw new Exception('Unauthorized.', 401);
+    }
+
+    /**
+     * Throws an "Inconsistent internal data" exception.
+     */
+    protected function throwInconsistentInternalDataException(): never {
+        throw new UOPFException('Inconsistent internal data.');
     }
 
     /**

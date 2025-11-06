@@ -41,7 +41,7 @@ abstract class Model implements ArrayAccess {
     }
 
     /**
-     * Throws an unsupported editable field exception.
+     * Throws an "Unsupported editable field" exception.
      */
     protected function throwsUnsupportedEditableFieldException(): never {
         throw new Exception('Unsupported editable field.');

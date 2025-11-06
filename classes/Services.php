@@ -9,6 +9,7 @@ use UOPF\Cache\Variable as VariableCache;
 use UOPF\Routing\Route;
 use UOPF\Routing\Router;
 use UOPF\Manager\User as UserManager;
+use UOPF\Manager\Image as ImageManager;
 use UOPF\Manager\Metadata as MetadataManager;
 use UOPF\Interface\Server as InterfaceServer;
 use Dotenv\Dotenv;
@@ -36,6 +37,11 @@ final class Services {
      * The user manager.
      */
     public readonly UserManager $userManager;
+
+    /**
+     * The image manager.
+     */
+    public readonly ImageManager $imageManager;
 
     /**
      * The system metadata manager.
@@ -76,6 +82,7 @@ final class Services {
 
         // Initialize managers of data tables.
         $this->userManager = new UserManager();
+        $this->imageManager = new ImageManager();
 
         // Initialize managers of metadata data tables.
         $this->systemMetadataManager = new MetadataManager('s');
