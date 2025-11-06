@@ -23,7 +23,7 @@ use UOPF\Interface\Exception\ParameterException;
 /**
  * User Metadata
  */
-final class UserMetadata extends Endpoint {
+final class UsersMetadata extends Endpoint {
     public function write(Response $response): User {
         $id = $this->filterUserParameterInQuery($this->query['id']);
 

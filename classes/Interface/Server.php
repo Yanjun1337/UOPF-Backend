@@ -143,7 +143,7 @@ final class Server {
 
         $this->router->register(new Route(
             uri: "users/{$user}/meta/(?P<name>[^/]+)",
-            controller: ["{$prefix}UserMetadata", 'serve'],
+            controller: ["{$prefix}UsersMetadata", 'serve'],
             isDirectory: true
         ));
 
