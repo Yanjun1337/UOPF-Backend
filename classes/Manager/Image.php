@@ -13,6 +13,7 @@ use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Exception\ImageUploadException;
 use UOPF\Exception\DuplicateUniqueColumnException;
 use Ramsey\Uuid\Uuid;
+use Intervention\Image\ImageManager;
 
 /**
  * Image Manager
@@ -41,10 +42,39 @@ final class Image extends Manager {
 
     public function upload(string $path, ?ImageUploadParameters $parameters = null): int {
         $metadata = static::parseImageFile($path);
+
+        if (isset($parameters->maximumLengthSize)) {
+            $covered = static::createTemporaryFile();
+
+            try {
+                try {
+                    $editor = ImageManager::imagick()->read($path);
+                    $editor->coverDown($parameters->maximumLengthSize, $parameters->maximumLengthSize);
+                    $editor->save($covered);
+                } catch (\Exception $exception) {
+                    throw new Exception('Failed to crop uploaded image.', previous: $exception);
+                }
+
+                $originalMetadata = $metadata;
+                $metadata = static::parseImageFile($covered);
+                $metadata['original'] = $originalMetadata;
+            } catch (Exception $exception) {
+                unlink($covered);
+                throw $exception;
+            }
+
+            $sourcePath = $covered;
+        } else {
+            $sourcePath = $path;
+        }
+
         $image = $this->prepareImageEntry($metadata);
 
-        if (!copy($path, $image->getPath()))
+        if (!copy($sourcePath, $image->getPath()))
             throw new Exception('Failed to copy uploaded image to storage directory.');
+
+        if (isset($covered))
+            unlink($covered);
 
         return Database::transaction(function () use (&$image, &$parameters) {
             if (!$locked = $this->fetchEntryDirectly($image['id'], lock: DatabaseLockType::write))
@@ -73,6 +103,20 @@ final class Image extends Manager {
             $this->updateLockedEntry($locked, $data);
             return $image['id'];
         });
+    }
+
+    public function publishLocked(Model $locked): void {
+        $this->updateLockedEntry($locked, [
+            'status' => 'publish',
+            'modified' => Database::getCurrentTime()
+        ]);
+    }
+
+    public function trashLocked(Model $locked): void {
+        $this->updateLockedEntry($locked, [
+            'status' => 'deleting',
+            'modified' => Database::getCurrentTime()
+        ]);
     }
 
     protected function prepareImageEntry(array $metadata): Model {

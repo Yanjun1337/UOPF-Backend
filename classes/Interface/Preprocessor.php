@@ -106,6 +106,12 @@ final class Preprocessor {
         if (isset($user['domain']))
             $preprocessed['domain'] = $user['domain'];
 
+        if (($avatar = $user->getImageSourceInMetadata('avatar')) !== null)
+            $preprocessed['avatar'] = $avatar;
+
+        if (($background = $user->getImageSourceInMetadata('background')) !== null)
+            $preprocessed['background'] = $background;
+
         if ($this->context->canEdit($user)) {
             $private = [
                 'registrationTime' => $user['registered'],

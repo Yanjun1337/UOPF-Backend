@@ -12,6 +12,12 @@ RUN docker-php-ext-install mysqli pdo pdo_mysql
 RUN pecl install redis && \
     docker-php-ext-enable redis
 
+# Install Imagick
+RUN apt-get update && \
+    apt-get install -y libmagickwand-dev && \
+    pecl install imagick && \
+    docker-php-ext-enable imagick
+
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>

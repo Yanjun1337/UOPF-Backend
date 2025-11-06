@@ -63,6 +63,18 @@ final class Metadata extends Manager {
         });
     }
 
+    public function setLocked(Model $locked, mixed $value): void {
+        $this->updateLockedEntry($locked, [
+            'value' => static::encodeValue($value),
+            'type' => static::determineValueType($value)->value
+        ]);
+    }
+
+    public function fetchDirectly(string $name, ?int $affiliatedTo = null, ?DatabaseLockType $lock = null): ?Model {
+        $conditions = $this->getFindingConditions($name, $affiliatedTo);
+        return $this->findEntryDirectly($conditions, $lock);
+    }
+
     protected function getFindingConditions(string $name, ?int $affiliatedTo = null): array {
         return [
             'group' => $this->group,

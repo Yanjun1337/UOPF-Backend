@@ -6,7 +6,7 @@ use UOPF\Validator;
 use UOPF\Exception\ValidatorException;
 use UOPF\Exception\ValidationException;
 
-final class StringValidator extends Validator {
+class StringValidator extends Validator {
     public function __construct(
         public readonly ?bool $allowEmpty = null,
         public readonly ?int $max = null,

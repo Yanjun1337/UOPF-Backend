@@ -6,6 +6,7 @@ use UOPF\Model;
 use UOPF\Utilities;
 use UOPF\Exception;
 use UOPF\ModelFieldType;
+use UOPF\Facade\Manager\Image as ImageManager;
 use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
 use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
 
@@ -73,6 +74,19 @@ final class User extends Model {
 
     public function isAdministrator(): bool {
         return $this->data['role'] === 'administrator';
+    }
+
+    public function getImageSourceInMetadata(string $name): ?string {
+        if (!$id = $this->getMetadata($name))
+            return null;
+
+        if (!is_int($id))
+            return null;
+
+        if (!$image = ImageManager::fetchEntry($id))
+            return null;
+
+        return $image->getSource();
     }
 
     public static function getSchema(): array {

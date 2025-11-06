@@ -7,6 +7,11 @@ final class ImageUploadParameters {
         /**
          * The ID of the user who uploaded the image.
          */
-        public readonly ?int $user = null
+        public readonly ?int $user = null,
+
+        /**
+         * Maximum side length.
+         */
+        public readonly ?int $maximumLengthSize = null
     ) {}
 }

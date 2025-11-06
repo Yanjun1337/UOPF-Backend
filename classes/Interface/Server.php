@@ -75,8 +75,10 @@ final class Server {
 
             if (!$response->canonicalize($matched, $request)) {
                 $controller = $matched->route->controller;
-                $content = $controller($request, $response);
-                $response->setContent(json_encode($content));
+                $data = $controller($request, $response, $matched->parameters);
+
+                $content = json_encode($data);
+                $response->setContent($content);
             }
         } catch (Exception $exception) {
             $exception->renderTo($response);
@@ -122,8 +124,10 @@ final class Server {
         if (isset($this->router))
             return $this->router;
 
-        $this->router = new Router($this->root);
+        $user = '(?P<id>[1-9]+\d*|current)';
         $prefix = 'UOPF\\Interface\Endpoint\\';
+
+        $this->router = new Router($this->root);
 
         $this->router->register(new Route(
             uri: 'session',
@@ -134,6 +138,12 @@ final class Server {
         $this->router->register(new Route(
             uri: 'posts/upload',
             controller: ["{$prefix}PostsUpload", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: "users/{$user}/meta/(?P<name>[^/]+)",
+            controller: ["{$prefix}UserMetadata", 'serve'],
             isDirectory: true
         ));
 

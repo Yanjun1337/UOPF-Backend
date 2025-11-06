@@ -60,6 +60,19 @@ abstract class Manager {
     }
 
     /**
+     * Updates an entry using its ID and returns the updated model.
+     */
+    public function updateEntry(int $id, array $data): Model {
+        return Database::transaction(function () use (&$id, &$data) {
+            if (!$locked = $this->fetchEntryDirectly($id, lock: DatabaseLockType::write))
+                throw new Exception('Failed to fetch the entry to update.');
+
+            $this->updateLockedEntry($locked, $data);
+            return $this->fetchEntryDirectly($id);
+        });
+    }
+
+    /**
      * Updates a locked entry.
      */
     public function updateLockedEntry(Model $locked, array $data): void {

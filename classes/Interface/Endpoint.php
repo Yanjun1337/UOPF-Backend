@@ -10,8 +10,10 @@ use UOPF\Response;
 use UOPF\Services;
 use UOPF\Exception as UOPFException;
 use UOPF\Model\User as UserModel;
+use UOPF\Validator\IntegerValidator;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Exception\CaptchaException;
+use UOPF\Exception\ValidationException;
 use UOPF\Exception\DictionaryValidationException;
 use UOPF\Interface\Exception\ParameterException;
 
@@ -26,7 +28,12 @@ abstract class Endpoint {
         /**
          * The incoming request.
          */
-        public readonly Request $request
+        public readonly Request $request,
+
+        /**
+         * The parameters from HTTP query.
+         */
+        public readonly array $query = []
     ) {}
 
     /**
@@ -158,6 +165,48 @@ abstract class Endpoint {
     }
 
     /**
+     * Returns the user ID after validation and filtering.
+     */
+    protected function filterUserParameterInQuery(mixed $value): int {
+        if ($value === 'current') {
+            if (isset($this->request->user))
+                return $this->request->user['id'];
+            else
+                $this->throwUnauthorizedException();
+        } else {
+            return $this->filterIdParameterInQuery($value);
+        }
+    }
+
+    /**
+     * Returns the ID after validation and filtering.
+     */
+    protected function filterIdParameterInQuery(mixed $value): int {
+        try {
+            return (new IntegerValidator(min: 1))->filter($value);
+        } catch (ValidationException) {
+            $this->throwNotFoundException();
+        }
+    }
+
+    /**
+     * Throws a "Permission denied" exception.
+     */
+    protected function throwPermissionDeniedException(): never {
+        if (isset($this->request->user))
+            throw new Exception('Permission denied.', 403);
+        else
+            $this->throwUnauthorizedException();
+    }
+
+    /**
+     * Throws a "Not found" exception.
+     */
+    protected function throwNotFoundException(): never {
+        throw new Exception('Not found.', 404);
+    }
+
+    /**
      * Throws a "Method not allowed" exception.
      */
     protected function throwMethodNotSupportedException(Response $response): never {
@@ -217,8 +266,8 @@ abstract class Endpoint {
     /**
      * Callback for the router.
      */
-    public static function serve(Request $request, Response $response): mixed {
-        $instance = new static($request);
+    public static function serve(Request $request, Response $response, array $query = []): mixed {
+        $instance = new static($request, $query);
         return $instance->generateContent($response);
     }
 
