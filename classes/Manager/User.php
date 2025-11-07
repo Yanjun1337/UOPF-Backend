@@ -10,6 +10,8 @@ use UOPF\Validator\IntegerValidator;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\DictionaryValidatorElement;
 use UOPF\Exception\ValidationException;
+use UOPF\Exception\UserRegistrationException;
+use UOPF\Exception\DuplicateUniqueColumnException;
 use const PASSWORD_ARGON2ID;
 
 /**
@@ -91,11 +93,11 @@ final class User extends Manager {
     }
 
     public function register(
-        string $role,
         string $username,
         string $displayName,
         string $email,
-        string $password
+        string $passwordHash,
+        string $role = 'normal'
     ): Model {
         $data = [
             'role' => $role,
@@ -106,13 +108,29 @@ final class User extends Manager {
         ];
 
         $metadata = [
-            'password' => static::createPasswordHash($password),
+            'password' => $passwordHash,
             'unreadNotifications' => 0
         ];
 
         return Database::transaction(function () use (&$data, &$metadata) {
             // 1. Insert the entry into the database.
-            $created = $this->createEntry($data);
+            try {
+                $created = $this->createEntry($data);
+            } catch (DuplicateUniqueColumnException $exception) {
+                switch ($exception->column) {
+                    case 'username':
+                        throw new UserRegistrationException('This username is already used by another user.');
+
+                    case 'display_name':
+                        throw new UserRegistrationException('This display name is already used by another user.');
+
+                    case 'email':
+                        throw new UserRegistrationException('This email is already used by another user.');
+
+                    default:
+                        throw $exception;
+                }
+            }
 
             // 2. Insert metadata into the database.
             foreach ($metadata as $name => $value)
@@ -123,7 +141,7 @@ final class User extends Manager {
         });
     }
 
-    protected static function createPasswordHash(string $password): string {
+    public function createPasswordHash(string $password): string {
         return password_hash($password, PASSWORD_ARGON2ID);
     }
 }

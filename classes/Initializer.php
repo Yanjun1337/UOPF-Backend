@@ -38,7 +38,7 @@ abstract class Initializer {
             username: $username,
             displayName: $username,
             email: $email,
-            password: $password
+            passwordHash: UserManager::createPasswordHash($password)
         );
 
         // 5. Flush cache.

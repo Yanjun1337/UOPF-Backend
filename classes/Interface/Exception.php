@@ -4,6 +4,7 @@ namespace UOPF\Interface;
 
 use Throwable;
 use UOPF\Response;
+use UOPF\Services;
 
 /**
  * API Exception
@@ -27,7 +28,30 @@ class Exception extends \Exception {
         $content = $this->data;
         $content['message'] = $this->getMessage();
 
+        if (Services::isDevelopment()) {
+            $previous = $this->getExceptionChain();
+
+            if (!empty($previous))
+                $content['previous'] = $previous;
+        }
+
         $response->setStatusCode($this->getCode());
         $response->setContent(json_encode($content));
+    }
+
+    protected function getExceptionChain(): array {
+        $chain = [];
+        $exception = $this->getPrevious();
+
+        while (isset($exception)) {
+            $chain[] = [
+                'message' => $exception->getMessage(),
+                'code' => $exception->getCode()
+            ];
+
+            $exception = $exception->getPrevious();
+        }
+
+        return $chain;
     }
 }

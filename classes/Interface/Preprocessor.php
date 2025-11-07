@@ -6,6 +6,7 @@ use UOPF\Model;
 use UOPF\Exception as SystemException;
 use UOPF\Model\User as UserModel;
 use UOPF\Model\Image as ImageModel;
+use UOPF\Model\TheCase as CaseModel;
 use UOPF\Interface\Embeddable\Entry as EmbeddableEntry;
 
 /**
@@ -52,6 +53,9 @@ final class Preprocessor {
 
             case $data instanceof ImageModel:
                 return $this->preprocessImage($data);
+
+            case $data instanceof CaseModel:
+                return $this->preprocessCase($data);
 
             default:
                 static::throwUnprocessableException();
@@ -146,6 +150,20 @@ final class Preprocessor {
 
         if ($this->context->isAdministrative() && isset($image['record']))
             $preprocessed['record'] = $image['record'];
+
+        return $preprocessed;
+    }
+
+    protected function preprocessCase(CaseModel $case): array {
+        $preprocessed = [
+            'id' => $case['id'],
+            'type' => $case['type'],
+            'status' => $case['status'],
+            'time' => $case['modified']
+        ];
+
+        if (isset($case['user']))
+            $preprocessed['user'] = new EmbeddableEntry($case['user'], 'user');
 
         return $preprocessed;
     }

@@ -83,24 +83,7 @@ final class Server {
         } catch (Exception $exception) {
             $exception->renderTo($response);
         } catch (\Exception $exception) {
-            if (Services::isDevelopment()) {
-                $exceptions = [];
-
-                do {
-                    $exceptions[] = [
-                        'message' => $exception->getMessage(),
-                        'code' => $exception->getCode()
-                    ];
-
-                    $exception = $exception->getPrevious();
-                } while (isset($exception));
-
-                $data = compact('exceptions');
-            } else {
-                $data = [];
-            }
-
-            $interfaceException = new Exception('Internal server error.', 500, $data);
+            $interfaceException = new Exception('Internal server error.', 500, previous: $exception);
             $interfaceException->renderTo($response);
         }
 
@@ -144,6 +127,18 @@ final class Server {
         $this->router->register(new Route(
             uri: "users/{$user}/meta/(?P<name>[^/]+)",
             controller: ["{$prefix}UsersMetadata", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: "users",
+            controller: ["{$prefix}Users", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: "users/register",
+            controller: ["{$prefix}UsersRegister", 'serve'],
             isDirectory: true
         ));
 

@@ -5,7 +5,7 @@ namespace UOPF\Validator;
 use UOPF\Validator;
 use UOPF\Exception\ValidationException;
 
-final class IntegerValidator extends Validator {
+class IntegerValidator extends Validator {
     public function __construct(
         public readonly ?int $max = null,
         public readonly ?int $min = null

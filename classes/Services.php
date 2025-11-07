@@ -10,8 +10,10 @@ use UOPF\Routing\Route;
 use UOPF\Routing\Router;
 use UOPF\Manager\User as UserManager;
 use UOPF\Manager\Image as ImageManager;
+use UOPF\Manager\TheCase as CaseManager;
 use UOPF\Manager\Metadata as MetadataManager;
 use UOPF\Interface\Server as InterfaceServer;
+use UOPF\Exception\EnvironmentVariableException;
 use Dotenv\Dotenv;
 use Symfony\Component\HttpKernel\HttpKernel;
 use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
@@ -42,6 +44,11 @@ final class Services {
      * The image manager.
      */
     public readonly ImageManager $imageManager;
+
+    /**
+     * The case manager.
+     */
+    public readonly CaseManager $caseManager;
 
     /**
      * The system metadata manager.
@@ -83,6 +90,7 @@ final class Services {
         // Initialize managers of data tables.
         $this->userManager = new UserManager();
         $this->imageManager = new ImageManager();
+        $this->caseManager = new CaseManager();
 
         // Initialize managers of metadata data tables.
         $this->systemMetadataManager = new MetadataManager('s');
@@ -190,7 +198,7 @@ final class Services {
 
             case 'redis':
                 if (!isset($_ENV['UOPF_CACHE_REDIS_HOST']))
-                    throw new Exception('Redis host is required.');
+                    throw new EnvironmentVariableException('Redis host is required.', 'UOPF_CACHE_REDIS_HOST');
 
                 return new RedisCache(
                     $_ENV['UOPF_CACHE_REDIS_HOST'],
@@ -200,22 +208,22 @@ final class Services {
                 );
 
             default:
-                throw new Exception('Cache engine is invalid.');
+                throw new EnvironmentVariableException('Cache engine is invalid.', 'UOPF_CACHE_ENGINE');
         }
     }
 
     protected static function connectDatabase(): Database {
         if (!isset($_ENV['UOPF_DB_HOST']))
-            throw new Exception('Database host is required.');
+            throw new EnvironmentVariableException('Database host is required.', 'UOPF_DB_HOST');
 
         if (!isset($_ENV['UOPF_DB_NAME']))
-            throw new Exception('Database name is required.');
+            throw new EnvironmentVariableException('Database name is required.', 'UOPF_DB_NAME');
 
         if (!isset($_ENV['UOPF_DB_USERNAME']))
-            throw new Exception('Database username is required.');
+            throw new EnvironmentVariableException('Database username is required.', 'UOPF_DB_USERNAME');
 
         if (!isset($_ENV['UOPF_DB_PASSWORD']))
-            throw new Exception('Database password is required.');
+            throw new EnvironmentVariableException('Database password is required.', 'UOPF_DB_PASSWORD');
 
         return new Database([
             'type' => 'mariadb',

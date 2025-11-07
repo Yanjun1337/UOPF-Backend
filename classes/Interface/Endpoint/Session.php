@@ -13,6 +13,7 @@ use UOPF\Validator\StringValidator;
 use UOPF\Validator\BooleanValidator;
 use UOPF\Validator\Extension\UsernameValidator;
 use UOPF\Validator\Extension\UserPasswordValidator;
+use UOPF\Validator\Extension\CaptchaTokenValidator;
 use UOPF\Interface\Endpoint;
 use UOPF\Interface\Exception\ParameterException;
 
@@ -72,11 +73,7 @@ final class Session extends Endpoint {
             'captcha' => new DictionaryValidatorElement(
                 label: 'Captcha Token',
                 required: !Services::isDevelopment(),
-
-                validator: new StringValidator(
-                    allowEmpty: false,
-                    max: 8192
-                )
+                validator: new CaptchaTokenValidator()
             )
         ]));
 

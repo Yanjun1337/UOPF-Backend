@@ -11,7 +11,6 @@ use UOPF\Model\Image as Model;
 use UOPF\Facade\Database;
 use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Exception\ImageUploadException;
-use UOPF\Exception\DuplicateUniqueColumnException;
 use Ramsey\Uuid\Uuid;
 use Intervention\Image\ImageManager;
 
@@ -120,24 +119,16 @@ final class Image extends Manager {
     }
 
     protected function prepareImageEntry(array $metadata): Model {
+        $file = Uuid::uuid4()->toString();
         $time = Database::getCurrentTime();
 
-		$data = [
+		return $this->createEntry([
+            'file' => $file,
 			'status' => 'uploading',
 			'created' => $time,
 			'modified' => $time,
 			'metadata' => $metadata
-        ];
-
-        while (true) {
-            try {
-                $data['file'] = Uuid::uuid4()->toString();
-                return $this->createEntry($data);
-            } catch (DuplicateUniqueColumnException $exception) {
-                if ($exception->column !== 'file')
-                    throw $exception;
-            }
-        }
+        ]);
     }
 
     protected static function parseImageFile(string $path): array {

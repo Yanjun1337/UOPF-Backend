@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace UOPF;
 
 use UOPF\Exception\CaptchaException;
+use UOPF\Exception\EnvironmentVariableException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use const JSON_ERROR_NONE;
@@ -55,7 +56,7 @@ abstract class Captcha {
         if (isset($_ENV['UOPF_HCAPTCHA_SECRET']))
             return $_ENV['UOPF_HCAPTCHA_SECRET'];
         else
-            throw new Exception('Secret of hCaptcha is required.');
+            throw new EnvironmentVariableException('Secret of hCaptcha is required.', 'UOPF_HCAPTCHA_SECRET');
     }
 
     /**
@@ -65,6 +66,6 @@ abstract class Captcha {
         if (isset($_ENV['UOPF_HCAPTCHA_SITEKEY']))
             return $_ENV['UOPF_HCAPTCHA_SITEKEY'];
         else
-            throw new Exception('Sitekey of hCaptcha is required.');
+            throw new EnvironmentVariableException('Sitekey of hCaptcha is required.', 'UOPF_HCAPTCHA_SITEKEY');
     }
 }

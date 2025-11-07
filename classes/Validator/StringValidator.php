@@ -60,7 +60,7 @@ class StringValidator extends Validator {
 
         if (isset($this->regex)) {
             if (!preg_match("/^{$this->regex}$/", $value))
-                throw new ValidatorException('Value does not meet requirements.');
+                throw new ValidationException('Value does not meet requirements.');
         }
 
         return $value;
