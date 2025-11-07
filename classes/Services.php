@@ -12,6 +12,7 @@ use UOPF\Manager\User as UserManager;
 use UOPF\Manager\Image as ImageManager;
 use UOPF\Manager\TheCase as CaseManager;
 use UOPF\Manager\Metadata as MetadataManager;
+use UOPF\Manager\Relationship as RelationshipManager;
 use UOPF\Interface\Server as InterfaceServer;
 use UOPF\Exception\EnvironmentVariableException;
 use Dotenv\Dotenv;
@@ -20,6 +21,7 @@ use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use UOPF\Model\Relationship;
 
 /**
  * Service Manager
@@ -61,6 +63,11 @@ final class Services {
     public readonly MetadataManager $userMetadataManager;
 
     /**
+     * The user relationship manager.
+     */
+    public readonly RelationshipManager $userRelationshipManager;
+
+    /**
      * The router.
      */
     protected Router $router;
@@ -95,6 +102,9 @@ final class Services {
         // Initialize managers of metadata data tables.
         $this->systemMetadataManager = new MetadataManager('s');
         $this->userMetadataManager = new MetadataManager('u');
+
+        // Initialize managers of relationship data tables.
+        $this->userRelationshipManager = new RelationshipManager('u');
     }
 
     public function isInitialized(): bool {

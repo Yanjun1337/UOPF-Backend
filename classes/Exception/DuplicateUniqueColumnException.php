@@ -13,13 +13,8 @@ class DuplicateUniqueColumnException extends DatabaseException {
 
         string $message = '',
         int $code = 0,
-        ?Throwable $previous = null,
-
-        /**
-         * Database error code.
-         */
-        public readonly ?string $databaseCode = null
+        ?Throwable $previous = null
     ) {
-        parent::__construct($message, $code, $previous, $databaseCode);
+        parent::__construct($message, $code, $previous);
     }
 }

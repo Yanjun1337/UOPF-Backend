@@ -142,6 +142,12 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: "users/{$user}/relationship",
+            controller: ["{$prefix}UsersRelationship", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 

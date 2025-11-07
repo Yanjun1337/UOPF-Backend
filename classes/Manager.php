@@ -87,6 +87,20 @@ abstract class Manager {
     }
 
     /**
+     * Deletes a locked entry.
+     */
+    public function deleteLockedEntry(Model $locked): void {
+        try {
+            $statement = Database::delete(static::getTableName(), ['id' => $locked['id']]);
+        } catch (PDOException $exception) {
+            throw DatabaseException::createFromPDOException($exception);
+        }
+
+        if ($statement->rowCount() !== 1)
+            throw new Exception('Failed to delete entry.');
+    }
+
+    /**
      * Finds an entry directly from the database that matches specific conditions.
      */
     public function findEntryDirectly(array $conditions, ?DatabaseLockType $lock = null): ?Model {
@@ -119,5 +133,12 @@ abstract class Manager {
      */
     public function fetchEntry(string|int|float|bool $value, string $field = 'id'): ?Model {
         return $this->fetchEntryDirectly($value, $field); // @TODO
+    }
+
+    /**
+     * Increments a field of a locked entry.
+     */
+    public function incrementLockedEntryField(Model $locked, string $field, int $step = 1): void {
+        $this->updateLockedEntry($locked, [$field => $locked[$field] + $step]);
     }
 }

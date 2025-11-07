@@ -27,8 +27,7 @@ class DatabaseException extends Exception {
             return new DuplicateUniqueColumnException(
                 $duplicateColumn,
                 $exception->getMessage(),
-                previous: $exception,
-                databaseCode: $exception->getCode()
+                previous: $exception
             );
         } else {
             return new self(
@@ -40,10 +39,10 @@ class DatabaseException extends Exception {
     }
 
     protected static function extractDuplicateColumnFromPDOException(PDOException $exception): ?string {
-        if ($exception->errorInfo[0] !== 23000)
+        if ($exception->errorInfo[0] != 23000)
             return null;
 
-        if ($exception->errorInfo[1] !== 1062)
+        if ($exception->errorInfo[1] != 1062)
             return null;
 
         $message = $exception->errorInfo[2];

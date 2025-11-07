@@ -114,6 +114,18 @@ CREATE TABLE `cases` (
 	PRIMARY KEY (`id`),
 	UNIQUE KEY `tag` (`type`, `tag`)
 ) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
+
+CREATE TABLE `relationships` (
+	`id` bigint( 20 ) unsigned NOT NULL auto_increment,
+	`type` varchar( 20 ) NOT NULL,
+	`subject` bigint( 20 ) unsigned NOT NULL,
+	`object` bigint( 20 ) unsigned NOT NULL,
+	`created` datetime NOT NULL,
+
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `relationship` (`type`, `subject`, `object`),
+	KEY `object` (`type`, `object`)
+) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
         ");
     }
 
