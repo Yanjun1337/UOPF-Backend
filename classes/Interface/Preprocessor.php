@@ -6,6 +6,7 @@ use UOPF\Model;
 use UOPF\Exception as SystemException;
 use UOPF\Model\User as UserModel;
 use UOPF\Model\Image as ImageModel;
+use UOPF\Model\Record as RecordModel;
 use UOPF\Model\TheCase as CaseModel;
 use UOPF\Model\Relationship as RelationshipModel;
 use UOPF\Interface\Embeddable\Entry as EmbeddableEntry;
@@ -61,6 +62,9 @@ final class Preprocessor {
 
             case $data instanceof RelationshipModel:
                 return $this->preprocessRelationship($data);
+
+            case $data instanceof RecordModel:
+                return $this->preprocessRecord($data);
 
             default:
                 static::throwUnprocessableException();
@@ -190,6 +194,12 @@ final class Preprocessor {
 
             'subject' => $relationship['subject'],
             'object' => $relationship['object']
+        ];
+    }
+
+    protected function preprocessRecord(RecordModel $record): array {
+        return [
+            'id' => $record['id']
         ];
     }
 

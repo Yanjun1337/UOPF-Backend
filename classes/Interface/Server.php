@@ -166,6 +166,12 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'posts',
+            controller: ["{$prefix}Posts", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 

@@ -20,6 +20,7 @@
         "guzzlehttp/guzzle": "^7.9",
         "intervention/image": "^3.11",
         "ramsey/uuid": "^4.9",
-        "phpmailer/phpmailer": "^6.11"
+        "phpmailer/phpmailer": "^6.11",
+        "ezyang/htmlpurifier": "^4.19"
     }
 }
