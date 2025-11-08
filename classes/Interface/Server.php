@@ -131,8 +131,14 @@ final class Server {
         ));
 
         $this->router->register(new Route(
-            uri: "users",
+            uri: 'users',
             controller: ["{$prefix}Users", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: "users/{$user}",
+            controller: ["{$prefix}UsersId", 'serve'],
             isDirectory: true
         ));
 

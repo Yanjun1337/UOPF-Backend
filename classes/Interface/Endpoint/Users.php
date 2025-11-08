@@ -10,9 +10,16 @@ use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\TheCase as CaseManager;
 use UOPF\Interface\Endpoint;
 use UOPF\Interface\Exception\ParameterException;
+use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
 use UOPF\Validator\DictionaryValidator;
+use UOPF\Validator\EnumerationValidator;
 use UOPF\Validator\DictionaryValidatorElement;
 use UOPF\Validator\Extension\IdValidator;
+use UOPF\Validator\Extension\OrderValidator;
+use UOPF\Validator\Extension\PageNumberValidator;
+use UOPF\Validator\Extension\UserDomainValidator;
+use UOPF\Validator\Extension\NumberPerPageValidator;
+use UOPF\Validator\Extension\SearchKeywordsValidator;
 use UOPF\Validator\Extension\ValidationCodeValidator;
 use UOPF\Exception\ValidationCodeException;
 use PragmaRX\Random\Random;
@@ -21,6 +28,83 @@ use PragmaRX\Random\Random;
  * Users
  */
 final class Users extends Endpoint {
+    public function read(Response $response): EmbeddableList {
+        $filtered = $this->filterQuery(new DictionaryValidator([
+            'page' => new DictionaryValidatorElement(
+                label: 'Page',
+                default: 1,
+                validator: new PageNumberValidator()
+            ),
+
+            'perPage' => new DictionaryValidatorElement(
+                label: 'Number per Page',
+                default: 10,
+                validator: new NumberPerPageValidator()
+            ),
+
+            'order' => new DictionaryValidatorElement(
+                label: 'Order',
+                default: OrderValidator::DESCENDING,
+                validator: new OrderValidator()
+            ),
+
+            'orderby' => new DictionaryValidatorElement(
+                label: 'Orderby',
+                default: 'followers',
+
+                validator: new EnumerationValidator([
+                    'followers',
+                    'posts',
+                    'registered'
+                ])
+            ),
+
+            'search' => new DictionaryValidatorElement(
+                label: 'Search Keywords',
+                validator: new SearchKeywordsValidator()
+            ),
+
+            'domain' => new DictionaryValidatorElement(
+                label: 'Personal Domain',
+                validator: new UserDomainValidator()
+            )
+        ]));
+
+        if ($filtered['orderby'] === 'registered') {
+            if ($this->isAdministrative())
+                $orderby = $filtered['orderby'];
+            else
+                $this->throwPermissionDeniedException();
+        } else {
+            $orderby = "_{$filtered['orderby']}";
+        }
+
+        $where = [
+            'TOTAL' => true,
+            'ORDER' => [$orderby => $filtered['order']],
+            'LIMIT' => Database::getPagingLimit($filtered['perPage'], $filtered['page'])
+        ];
+
+        if (isset($filtered['domain']))
+            $where['AND'] = ['domain' => $filtered['domain']];
+
+        if (isset($filtered['search'])) {
+            $where['OR # search'] = Database::getSearchClause(
+                $filtered['search'],
+
+                [
+                    'display_name',
+                    'description'
+                ]
+            );
+        }
+
+        $retrieved = UserManager::queryEntries($where);
+
+        static::setPagingOnResponse($response, $retrieved->total, $filtered['perPage']);
+        return new EmbeddableList($retrieved->entries);
+    }
+
     public function write(Response $response): User {
         $filtered = $this->filterBody(new DictionaryValidator([
             'case' => new DictionaryValidatorElement(

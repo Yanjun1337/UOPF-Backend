@@ -129,17 +129,17 @@ abstract class Endpoint {
     }
 
     /**
+     * Returns the HTTP query of the incoming request after validation and filtering.
+     */
+    protected function filterQuery(DictionaryValidator $validator): mixed {
+        return static::filterInput($this->request->query->all(), $validator);
+    }
+
+    /**
      * Returns the HTTP body of the incoming request after validation and filtering.
      */
     protected function filterBody(DictionaryValidator $validator): mixed {
-        try {
-            return $validator->filter($this->request->getPayload()->all());
-        } catch (DictionaryValidationException $exception) {
-            throw new ParameterException(
-                $exception->getLabeledMessage(),
-                $exception->elementKey
-            );
-        }
+        return static::filterInput($this->request->getPayload()->all(), $validator);
     }
 
     /**
@@ -287,5 +287,19 @@ abstract class Endpoint {
             'DELETE' => 'delete',
             'OPTIONS' => 'options'
         ];
+    }
+
+    /**
+     * Returns user input after validation and filtering.
+     */
+    protected static function filterInput(mixed $input, DictionaryValidator $validator): mixed {
+        try {
+            return $validator->filter($input);
+        } catch (DictionaryValidationException $exception) {
+            throw new ParameterException(
+                $exception->getLabeledMessage(),
+                $exception->elementKey
+            );
+        }
     }
 }

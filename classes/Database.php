@@ -89,6 +89,22 @@ final class Database extends Medoo {
         return [$offset, $perPage];
     }
 
+    public function getSearchClause(array $keywords, array $fields): array {
+        $clause = [];
+
+        foreach ($keywords as $index => $keyword) {
+            $keywordClause = [];
+            $escapedKeyword = addcslashes($keyword, '_%\\');
+
+            foreach ($fields as $field)
+                $keywordClause["{$field}[~]"] = "%{$escapedKeyword}%";
+
+            $clause["OR #{$index}"] = $keywordClause;
+        }
+
+        return $clause;
+    }
+
     public function transaction(callable $callback): mixed {
         if ($this->transactionNestingLevel === 0) {
             $this->pdo->beginTransaction();
