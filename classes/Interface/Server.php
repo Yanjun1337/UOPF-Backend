@@ -148,6 +148,18 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: "users/{$user}/relationship/followers",
+            controller: ["{$prefix}UsersFollowers", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: "users/{$user}/relationship/followings",
+            controller: ["{$prefix}UsersFollowings", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 

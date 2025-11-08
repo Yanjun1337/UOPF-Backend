@@ -136,6 +136,20 @@ abstract class Manager {
     }
 
     /**
+     * Queries entries from the database.
+     */
+    public function queryEntries(array $where): RetrievedEntries {
+        $columns = array_keys($this->getModelClass()::getSchema());
+        $data = Database::select($this->getTableName(), $columns, $where);
+        $entries = array_map([$this, 'initializeEntry'], $data);
+
+        if (isset($where['TOTAL']) && $where['TOTAL'])
+            return new RetrievedEntries($entries, Database::fetchTotalRows());
+        else
+            return new RetrievedEntries($entries);
+    }
+
+    /**
      * Increments a field of a locked entry.
      */
     public function incrementLockedEntryField(Model $locked, string $field, int $step = 1): void {

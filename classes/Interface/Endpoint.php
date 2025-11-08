@@ -263,6 +263,11 @@ abstract class Endpoint {
         $response->headers->set('X-API-Token', $token);
     }
 
+    protected static function setPagingOnResponse(Response $response, int $total, int $perPage): void {
+        $response->headers->set('X-API-Total', strval($total));
+        $response->headers->set('X-API-TotalPages', strval(ceil($total / $perPage)));
+    }
+
     /**
      * Callback for the router.
      */

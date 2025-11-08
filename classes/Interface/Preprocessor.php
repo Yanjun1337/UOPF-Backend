@@ -9,7 +9,7 @@ use UOPF\Model\Image as ImageModel;
 use UOPF\Model\TheCase as CaseModel;
 use UOPF\Model\Relationship as RelationshipModel;
 use UOPF\Interface\Embeddable\Entry as EmbeddableEntry;
-use UOPF\Manager\Relationship;
+use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
 
 /**
  * Return Data Preprocessor
@@ -89,6 +89,16 @@ final class Preprocessor {
                     return $data->getEntry();
                 else
                     return $data->id;
+
+            case $data instanceof EmbeddableList:
+                $preprocessed = [];
+                $this->stack[] = '[]';
+
+                foreach ($data->value as $index => $value)
+                    $preprocessed[$index] = $this->preprocess($value);
+
+                array_pop($this->stack);
+                return $preprocessed;
 
             default:
                 throw new SystemException('Unsupported type of embeddable value.');

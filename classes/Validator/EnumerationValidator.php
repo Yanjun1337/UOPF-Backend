@@ -5,7 +5,7 @@ namespace UOPF\Validator;
 use UOPF\Validator;
 use UOPF\Exception\ValidationException;
 
-final class EnumerationValidator extends Validator {
+class EnumerationValidator extends Validator {
     public function __construct(
         public readonly array $values
     ) {}
