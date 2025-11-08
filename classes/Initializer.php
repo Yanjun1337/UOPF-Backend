@@ -86,14 +86,14 @@ CREATE TABLE `users` (
 ) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
 
 CREATE TABLE `images` (
-    `id` bigint( 20 ) unsigned NOT NULL auto_increment,
-    `status` varchar( 20 ) NOT NULL,
-    `file` varchar( 128 ) NOT NULL,
+    `id` bigint(20) unsigned NOT NULL auto_increment,
+    `status` varchar(20) NOT NULL,
+    `file` varchar(128) NOT NULL,
     `created` datetime NOT NULL,
     `modified` datetime NOT NULL,
-    `user` bigint( 20 ) unsigned,
-    `record` bigint( 20 ) unsigned,
-    `position` int( 11 ) unsigned,
+    `user` bigint(20) unsigned,
+    `record` bigint(20) unsigned,
+    `position` int(11) unsigned,
     `metadata` longtext NOT NULL,
 
     PRIMARY KEY (`id`),
@@ -102,29 +102,54 @@ CREATE TABLE `images` (
 ) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
 
 CREATE TABLE `cases` (
-	`id` bigint(20) unsigned NOT NULL auto_increment,
-	`user` bigint(20) unsigned,
-	`tag` varchar(191) NOT NULL,
-	`created` datetime NOT NULL,
-	`modified` datetime NOT NULL,
-	`type` varchar(20) NOT NULL,
-	`status` varchar(20) NOT NULL,
-	`metadata` longtext,
+    `id` bigint(20) unsigned NOT NULL auto_increment,
+    `user` bigint(20) unsigned,
+    `tag` varchar(191) NOT NULL,
+    `created` datetime NOT NULL,
+    `modified` datetime NOT NULL,
+    `type` varchar(20) NOT NULL,
+    `status` varchar(20) NOT NULL,
+    `metadata` longtext,
 
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `tag` (`type`, `tag`)
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `tag` (`type`, `tag`)
 ) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
 
 CREATE TABLE `relationships` (
-	`id` bigint( 20 ) unsigned NOT NULL auto_increment,
-	`type` varchar( 20 ) NOT NULL,
-	`subject` bigint( 20 ) unsigned NOT NULL,
-	`object` bigint( 20 ) unsigned NOT NULL,
-	`created` datetime NOT NULL,
+    `id` bigint(20) unsigned NOT NULL auto_increment,
+    `type` varchar(20) NOT NULL,
+    `subject` bigint(20) unsigned NOT NULL,
+    `object` bigint(20) unsigned NOT NULL,
+    `created` datetime NOT NULL,
 
-	PRIMARY KEY (`id`),
-	UNIQUE KEY `relationship` (`type`, `subject`, `object`),
-	KEY `object` (`type`, `object`)
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `relationship` (`type`, `subject`, `object`),
+    KEY `object` (`type`, `object`)
+) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
+
+CREATE TABLE `records` (
+    `id` bigint(20) unsigned NOT NULL auto_increment,
+    `user` bigint(20) unsigned NOT NULL,
+    `parent` bigint(20) unsigned,
+    `affiliated_to` bigint(20) unsigned,
+    `title` text,
+    `content` longtext NOT NULL,
+    `created` datetime NOT NULL,
+    `modified` datetime NOT NULL,
+    `type` varchar(20) NOT NULL,
+    `status` varchar(20) NOT NULL,
+    `user_agent` varchar(255),
+
+    `_likes` bigint(20) unsigned NOT NULL default 0,
+    `_dislikes` bigint(20) unsigned NOT NULL default 0,
+    `_comments` bigint(20) unsigned NOT NULL default 0,
+    `_reposts` bigint(20) unsigned NOT NULL default 0,
+
+    PRIMARY KEY (`id`),
+    KEY `list` (`type`, `status`, `affiliated_to`, `created`),
+    KEY `user` (`type`, `status`, `affiliated_to`, `user`, `created`),
+    KEY `children` (`type`, `status`, `affiliated_to`, `parent`, `created`),
+    FULLTEXT `search` (`title`, `content`)
 ) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
         ");
     }
