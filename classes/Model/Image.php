@@ -8,6 +8,10 @@ use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
 use const UOPF\ROOT;
 
 final class Image extends Model {
+    public function canBeEditedBy(User $user): bool {
+        return $this->data['user'] === $user['id'];
+    }
+
     public function getPath(): string {
         return static::getImagesDirectoryPath() . $this->getFileName();
     }

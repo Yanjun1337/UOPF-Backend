@@ -10,6 +10,7 @@ use UOPF\Interface\Exception\ParameterException;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\DictionaryValidatorElement;
 use UOPF\Validator\Extension\IdValidator;
+use UOPF\Validator\Extension\IdListValidator;
 use UOPF\Validator\Extension\RecordTitleValidator;
 use UOPF\Validator\Extension\RecordContentValidator;
 use UOPF\Exception\RecordUpdateException;
@@ -37,6 +38,12 @@ final class Posts extends Endpoint {
             'parent' => new DictionaryValidatorElement(
                 label: 'Post Parent',
                 validator: new IdValidator()
+            ),
+
+            'images' => new DictionaryValidatorElement(
+                label: 'Post Images',
+                default: [],
+                validator: new IdListValidator()
             )
         ]));
 
@@ -47,7 +54,8 @@ final class Posts extends Endpoint {
                 title: $filtered['title'] ?? null,
                 content: $filtered['content'],
                 parent: $filtered['parent'] ?? null,
-                userAgent: $this->request->headers->get('User-Agent')
+                userAgent: $this->request->headers->get('User-Agent'),
+                images: $filtered['images']
             );
         } catch (RecordUpdateException $exception) {
             throw new ParameterException($exception->getMessage(), previous: $exception);

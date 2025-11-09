@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace UOPF\Manager;
 
+use DOMDocument;
 use HTMLPurifier;
 use HTMLPurifier_Config as HTMLPurifierConfiguration;
 use UOPF\Manager;
@@ -10,6 +11,7 @@ use UOPF\DatabaseLockType;
 use UOPF\Model\Record as Model;
 use UOPF\Facade\Database;
 use UOPF\Facade\Manager\User as UserManager;
+use UOPF\Facade\Manager\Image as ImageManager;
 use UOPF\Exception\RecordUpdateException;
 
 /**
@@ -31,7 +33,9 @@ final class Record extends Manager {
         ?int $affiliatedTo = null,
         ?string $title = null,
         ?int $parent = null,
-        ?string $userAgent = null
+        ?string $userAgent = null,
+        array $images = [],
+        ?int $contextUser = null
     ): Model {
         return Database::transaction(function () use (
             &$type,
@@ -40,22 +44,53 @@ final class Record extends Manager {
             &$affiliatedTo,
             &$title,
             &$parent,
-            &$userAgent
+            &$userAgent,
+            &$images
         ) {
             if (!$lockedUser = UserManager::fetchEntryDirectly($user, lock: DatabaseLockType::write))
                 throw new RecordUpdateException('Author does not exist.');
 
             if (isset($title)) {
-                if ($type === 'post')
-                    $isLong = true;
-                else
+                if ($type !== 'post')
                     throw new RecordUpdateException('Only post can has title.');
+
+                if (isset($parent))
+                    throw new RecordUpdateException('Long post must be top-level.');
+
+                $isLong = true;
             } else {
                 $isLong = false;
             }
 
+            if ($isLong)
+                $maximumImages = 100;
+            elseif ($type === 'comment')
+                $maximumImages = 1;
+            elseif (isset($parent))
+                $maximumImages = 1;
+            else
+                $maximumImages = 9;
+
+            if (count($images) > $maximumImages)
+                throw new RecordUpdateException("Number of images cannot exceed {$maximumImages}.");
+
+            $lockedImages = [];
+
+            foreach ($images as $image) {
+                if (!$lockedImage = ImageManager::fetchEntryDirectly($image, lock: DatabaseLockType::write))
+                    throw new RecordUpdateException("Image ({$image}) does not exist.");
+
+                if ($lockedImage['status'] !== 'waiting')
+                    throw new RecordUpdateException("Image ({$image}) is invalid.");
+
+                if (!$lockedImage->canBeEditedBy($lockedUser))
+                    throw new RecordUpdateException("Permission denied to use image ({$image}).");
+
+                $lockedImages[] = $lockedImage;
+            }
+
             if ($isLong) {
-                $sanitized = static::sanitizeLongPostContent($content);
+                $sanitized = static::sanitizeLongPostContent($content, $lockedImages);
             } else {
                 if (mb_strlen($content) > 300)
                     throw new RecordUpdateException('Content cannot exceed 300 characters.');
@@ -77,9 +112,6 @@ final class Record extends Manager {
             }
 
             if (isset($parent)) {
-                if ($isLong)
-                    throw new RecordUpdateException('Long post must be top-level.');
-
                 if (!$lockedParent = $this->fetchEntryDirectly($parent, lock: DatabaseLockType::write))
                     throw new RecordUpdateException('Parent does not exist.');
 
@@ -137,12 +169,41 @@ final class Record extends Manager {
             //         throw new Exception('Author of record that this record is affiliated to does not exist.');
             // }
 
+            foreach ($lockedImages as $index => $lockedImage) {
+                ImageManager::updateLockedEntry($lockedImage, [
+                    'status' => 'publish',
+                    'record' => $record['id'],
+                    'position' => $index + 1,
+                    'modified' => $time
+                ]);
+            }
+
             return $record;
         });
     }
 
-    protected static function sanitizeLongPostContent(string $value): string {
-        return static::purifyLongPostContent($value);
+    protected static function sanitizeLongPostContent(string $value, array $images = []): string {
+        $purified = static::purifyLongPostContent($value);
+
+        $document = new DOMDocument();
+        $document->loadHTML('<?xml encoding="utf-8"?>' . $purified);
+
+        $sourceIndexedImages = [];
+
+        foreach ($images as $image) {
+            $source = $image->getSource();
+            $sourceIndexedImages[$source] = $image;
+        }
+
+        foreach ($document->getElementsByTagName('img') as $tag) {
+            $source = $tag->attributes['src']->value;
+
+            if (!isset($sourceIndexedImages[$source]))
+                $tag->parentNode->removeChild($tag);
+        }
+
+        $node = $document->getElementsByTagName('body')->item(0);
+        return substr($document->saveHTML($node), strlen('<body>'), (strlen('</body>') * -1));
     }
 
     protected static function purifyLongPostContent(string $value): string {
