@@ -10,6 +10,7 @@ use UOPF\Routing\Route;
 use UOPF\Routing\Router;
 use UOPF\Manager\User as UserManager;
 use UOPF\Manager\Image as ImageManager;
+use UOPF\Manager\Topic as TopicManager;
 use UOPF\Manager\Record as RecordManager;
 use UOPF\Manager\TheCase as CaseManager;
 use UOPF\Manager\Metadata as MetadataManager;
@@ -59,6 +60,11 @@ final class Services {
     public readonly RecordManager $recordManager;
 
     /**
+     * The topic manager.
+     */
+    public readonly TopicManager $topicManager;
+
+    /**
      * The system metadata manager.
      */
     public readonly MetadataManager $systemMetadataManager;
@@ -105,6 +111,7 @@ final class Services {
         $this->imageManager = new ImageManager();
         $this->caseManager = new CaseManager();
         $this->recordManager = new RecordManager();
+        $this->topicManager = new TopicManager();
 
         // Initialize managers of metadata data tables.
         $this->systemMetadataManager = new MetadataManager('s');

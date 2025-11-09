@@ -151,6 +151,20 @@ CREATE TABLE `records` (
     KEY `children` (`type`, `status`, `affiliated_to`, `parent`, `created`),
     FULLTEXT `search` (`title`, `content`)
 ) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
+
+CREATE TABLE `topics` (
+    `id` bigint(20) unsigned NOT NULL auto_increment,
+    `label` varchar(128) NOT NULL,
+    `created` datetime NOT NULL,
+    `modified` datetime NOT NULL,
+    `created_from` bigint(20) unsigned,
+
+    `_records` bigint(20) unsigned NOT NULL default 0,
+
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `label` (`label`),
+    KEY `count` (`_records`)
+) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
         ");
     }
 

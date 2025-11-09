@@ -12,6 +12,7 @@ use UOPF\Model\Record as Model;
 use UOPF\Facade\Database;
 use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\Image as ImageManager;
+use UOPF\Facade\Manager\Topic as TopicManager;
 use UOPF\Exception\RecordUpdateException;
 
 /**
@@ -90,12 +91,14 @@ final class Record extends Manager {
             }
 
             if ($isLong) {
-                $sanitized = static::sanitizeLongPostContent($content, $lockedImages);
+                $sanitizedContent = static::sanitizeLongPostContent($content, $lockedImages);
+                $topics = TopicManager::extractFromHTML($sanitizedContent);
             } else {
                 if (mb_strlen($content) > 300)
                     throw new RecordUpdateException('Content cannot exceed 300 characters.');
 
-                $sanitized = $content;
+                $sanitizedContent = $content;
+                $topics = TopicManager::extractFromText($sanitizedContent);
             }
 
             if ($type === 'comment') {
@@ -126,7 +129,7 @@ final class Record extends Manager {
 
             $data = [
                 'user' => $lockedUser['id'],
-                'content' => $sanitized,
+                'content' => $sanitizedContent,
                 'type' => $type,
                 'status' => 'publish',
                 'created' => $time,
@@ -178,6 +181,7 @@ final class Record extends Manager {
                 ]);
             }
 
+            TopicManager::engageRecordIn($topics, $record['id']);
             return $record;
         });
     }
