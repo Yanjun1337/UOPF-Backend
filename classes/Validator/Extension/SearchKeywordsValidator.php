@@ -15,7 +15,7 @@ final class SearchKeywordsValidator extends Validator {
 
         $value = preg_split('/\s/', $value);
         $value = array_map('trim', $value);
-        $value = array_unique($value);
+        $value = array_values(array_unique($value));
         $value = array_filter($value, [static::class, 'isNotEmpty']);
 
         if (count($value) > 8)

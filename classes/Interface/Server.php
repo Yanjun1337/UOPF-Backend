@@ -182,12 +182,12 @@ final class Server {
         $frontend = parse_url(SystemMetadataManager::get('frontendAddress'));
         $backend = parse_url(SystemMetadataManager::get('backendAddress'));
 
-        return array_unique(array_merge($specified, [
+        return array_values(array_unique(array_merge($specified, [
             'http://' . $frontend['host'],
             'https://' . $frontend['host'],
 
             'http://' . $backend['host'],
             'https://' . $backend['host']
-        ]));
+        ])));
     }
 }
