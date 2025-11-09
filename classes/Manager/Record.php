@@ -165,12 +165,12 @@ final class Record extends Manager {
             if ($type === 'post')
                 UserManager::incrementLockedEntryField($lockedUser, '_posts');
 
-            // if (isset($lockedAffiliatedTo)) {
-            //     $this->incrementLockedEntryField($lockedAffiliatedTo, '_comments');
+            if (isset($lockedAffiliatedTo)) {
+                $this->incrementLockedEntryField($lockedAffiliatedTo, '_comments');
 
-            //     if (!$lockedAffiliatedToUser = UserManager::fetchEntryDirectly($lockedAffiliatedTo['user'], lock: DatabaseLockType::write))
-            //         throw new Exception('Author of record that this record is affiliated to does not exist.');
-            // }
+                // if (!$lockedAffiliatedToUser = UserManager::fetchEntryDirectly($lockedAffiliatedTo['user'], lock: DatabaseLockType::write))
+                    // throw new Exception('Author of record that this record is affiliated to does not exist.');
+            }
 
             foreach ($lockedImages as $index => $lockedImage) {
                 ImageManager::updateLockedEntry($lockedImage, [
@@ -184,6 +184,65 @@ final class Record extends Manager {
             TopicManager::engageRecordIn($topics, $record['id']);
             return $record;
         });
+    }
+
+    public function trashLocked(Model $locked): void {
+        $allowedStatus = [
+            'publish',
+            'blocked'
+        ];
+
+        if (!in_array($locked['status'], $allowedStatus, true))
+            throw new RecordUpdateException('Invalid status.');
+
+        if ($locked['type'] === 'comment') {
+            $children = $this->queryEntries([
+                'type' => $locked['type'],
+                'status' => $allowedStatus,
+                'parent' => $locked['id']
+            ]);
+
+            foreach ($children->entries as $entry) {
+                if ($lockedChild = $this->fetchEntryDirectly($entry['id'], lock: DatabaseLockType::write))
+                    $this->trashLocked($lockedChild);
+                else
+                    throw new Exception('Failed to fetch child comment.');
+            }
+        }
+
+        $topics = $locked->extractTopics();
+        TopicManager::withdrawRecordFrom($topics);
+
+        if (isset($locked['parent'])) {
+            if (!$lockedParent = $this->fetchEntryDirectly($locked['parent'], lock: DatabaseLockType::write))
+                throw new Exception('Parent does not exist.');
+
+            $this->incrementLockedEntryField($lockedParent, '_reposts', -1);
+
+            if ($lockedParent['type'] === 'post') {
+                if ($lockedParentUser = UserManager::fetchEntryDirectly($lockedParent['user'], lock: DatabaseLockType::write))
+                    UserManager::incrementLockedEntryField($lockedParentUser, '_reposts', -1);
+                else
+                    throw new Exception('Author of parent record does not exist.');
+            }
+        }
+
+        if ($locked['type'] === 'post') {
+            if ($lockedUser = UserManager::fetchEntryDirectly($locked['user'], lock: DatabaseLockType::write))
+                UserManager::incrementLockedEntryField($lockedUser, '_posts', -1);
+            else
+                throw new Exception('Author does not exist.');
+        } elseif ($locked['type'] === 'comment') {
+            if ($lockedAffiliatedTo = $this->fetchEntryDirectly($locked['affiliated_to'], lock: DatabaseLockType::write))
+                $this->incrementLockedEntryField($lockedAffiliatedTo, '_comments', -1);
+            else
+                throw new Exception('Post the comment is affiliated to does not exist.');
+        }
+
+        $this->updateLockedEntry($locked, [
+            'status' => 'trashed',
+            'modified' => Database::getCurrentTime()
+        ]);
     }
 
     protected static function sanitizeLongPostContent(string $value, array $images = []): string {

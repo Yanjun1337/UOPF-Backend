@@ -4,6 +4,7 @@ namespace UOPF\Manager;
 
 use UOPF\Manager;
 use UOPF\Utilities;
+use UOPF\Exception;
 use UOPF\DatabaseLockType;
 use UOPF\Model\Topic as Model;
 use UOPF\Facade\Database;
@@ -38,6 +39,23 @@ final class Topic extends Manager {
                         'created_from' => $record,
                         '_records' => 1
                     ]);
+                }
+            }
+        });
+    }
+
+    public function withdrawRecordFrom(array $topics): void {
+        Database::transaction(function () use (&$topics) {
+            $time = Database::getCurrentTime();
+
+            foreach ($topics as $topic) {
+                if ($lockedTopic = $this->fetchEntryDirectly($topic, 'label', lock: DatabaseLockType::write)) {
+                    $this->updateLockedEntry($lockedTopic, [
+                        'modified' => $time,
+                        '_records' => $lockedTopic['_records'] - 1
+                    ]);
+                } else {
+                    throw new Exception('Failed to fetch topic.');
                 }
             }
         });

@@ -4,8 +4,30 @@ namespace UOPF\Model;
 
 use UOPF\Model;
 use UOPF\ModelFieldType;
+use UOPF\Facade\Manager\Topic as TopicManager;
 
 final class Record extends Model {
+    public function canBeEditedBy(User $user): bool {
+        if ($user->isAdministrator())
+            return true;
+
+        if ($this->data['status'] == 'publish')
+            return $this->data['user'] === $user['id'];
+
+        return false;
+    }
+
+    public function isLong(): bool {
+        return isset($this->data['title']);
+    }
+
+    public function extractTopics(): array {
+        if ($this->isLong())
+            return TopicManager::extractFromHTML($this->data['content']);
+        else
+            return TopicManager::extractFromText($this->data['content']);
+    }
+
     public static function getSchema(): array {
         return [
             'id' => ModelFieldType::integer,

@@ -2,8 +2,11 @@
 declare(strict_types=1);
 namespace UOPF\Interface\Endpoint;
 
+use ParentIterator;
 use UOPF\Response;
+use UOPF\DatabaseLockType;
 use UOPF\Model\Record;
+use UOPF\Facade\Database;
 use UOPF\Facade\Manager\Record as RecordManager;
 use UOPF\Interface\Endpoint;
 use UOPF\Interface\Exception\ParameterException;
@@ -63,5 +66,34 @@ final class Posts extends Endpoint {
 
         $response->setStatusCode(201);
         return $post;
+    }
+
+    public function delete(Response $response): Record {
+        $filtered = $this->filterBody(new DictionaryValidator([
+            'id' => new DictionaryValidatorElement(
+                label: 'Post ID',
+                required: true,
+                validator: new IdValidator()
+            )
+        ]));
+
+        return Database::transaction(function () use (&$filtered) {
+            if (!$lockedPost = RecordManager::fetchEntryDirectly($filtered['id'], lock: DatabaseLockType::write))
+                throw new ParameterException('Post to delete does not exist.', 'id');
+
+            if ($lockedPost['type'] !== 'post')
+                throw new ParameterException('Post to delete is invalid.', 'id');
+
+            if (!$this->canEdit($lockedPost))
+                $this->throwPermissionDeniedException();
+
+            try {
+                RecordManager::trashLocked($lockedPost);
+            } catch (RecordUpdateException $exception) {
+                throw new ParameterException($exception->getMessage(), previous: $exception);
+            }
+
+            return $lockedPost;
+        });
     }
 }
