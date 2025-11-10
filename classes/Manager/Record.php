@@ -186,6 +186,133 @@ final class Record extends Manager {
         });
     }
 
+    public function editLockedEntry(
+        Model $locked,
+        ?string $content = null,
+        ?string $title = null,
+        ?array $images = null
+    ): void {
+        if (
+            $locked->isLong() &&
+            isset($images) &&
+            !isset($content)
+        )
+            throw new RecordUpdateException('Content and images of a long post must be updated together.');
+
+        if (!$lockedUser = UserManager::fetchEntryDirectly($locked['user'], lock: DatabaseLockType::read))
+            throw new RecordUpdateException('Author does not exist.');
+
+        $data = [];
+        $time = Database::getCurrentTime();
+
+        if (isset($title)) {
+            if ($locked->isLong())
+                $data['title'] = $title;
+            else
+                throw new RecordUpdateException('Only long post can has title.');
+        }
+
+        if (
+            isset($images) ||
+            (isset($content) && $locked->isLong())
+        ) {
+            $attachments = $locked->fetchImagesDirectly();
+            $lockedImages = ['current' => []];
+
+            foreach ($attachments as $attachment) {
+                if ($lockedImage = ImageManager::fetchEntryDirectly($attachment['id'], lock: DatabaseLockType::write))
+                    $lockedImages['current'][$lockedImage['id']] = $lockedImage;
+                else
+                    throw new Exception('Failed to fetch image.');
+            }
+
+            if (isset($images)) {
+                if ($locked->isLong())
+                    $maximumImages = 100;
+                elseif ($locked['type'] === 'comment')
+                    $maximumImages = 1;
+                elseif (isset($locked['parent']))
+                    $maximumImages = 1;
+                else
+                    $maximumImages = 9;
+
+                if (count($images) > $maximumImages)
+                    throw new RecordUpdateException("Number of images cannot exceed {$maximumImages}.");
+
+                $lockedImages['newest'] = [];
+                $lockedImages['delete'] = $lockedImages['current'];
+
+                foreach ($images as $image) {
+                    if (isset($lockedImages['current'][$image])) {
+                        unset($lockedImages['delete'][$image]);
+                        $lockedImages['newest'][] = $lockedImages['current'][$image];
+                    } else {
+                        if (!$lockedImage = ImageManager::fetchEntryDirectly($image, lock: DatabaseLockType::write))
+                            throw new Exception("Image ({$image}) does not exist.");
+
+                        if ($lockedImage['status'] !== 'waiting')
+                            throw new RecordUpdateException("Image ({$image}) is invalid.");
+
+                        if (!$lockedImage->canBeEditedBy($lockedUser))
+                            throw new RecordUpdateException("Permission denied to use image ({$image}).");
+
+                        $lockedImages['newest'][] = $lockedImage;
+                    }
+                }
+            }
+        }
+
+        if (isset($content)) {
+            if ($locked->isLong()) {
+                if (isset($lockedImages['newest']))
+                    $attachments = $lockedImages['newest'];
+                else
+                    $attachments = $lockedImages['current'];
+
+                $sanitizedContent = static::sanitizeLongPostContent($content, $attachments);
+                $data['content'] = $sanitizedContent;
+
+                $topics = [
+                    'old' => TopicManager::extractFromHTML($locked['content']),
+                    'new' => TopicManager::extractFromHTML($sanitizedContent)
+                ];
+            } else {
+                if (mb_strlen($content) > 300)
+                    throw new RecordUpdateException('Content cannot exceed 300 characters.');
+
+                $data['content'] = $content;
+
+                $topics = [
+                    'old' => TopicManager::extractFromText($locked['content']),
+                    'new' => TopicManager::extractFromText($content)
+                ];
+            }
+
+            $topics['add'] = array_diff($topics['new'], $topics['old']);
+            $topics['remove'] = array_diff($topics['old'], $topics['new']);
+
+            TopicManager::engageRecordIn($topics['add'], $locked['id']);
+            TopicManager::withdrawRecordFrom($topics['remove']);
+        }
+
+        if (isset($lockedImages['newest'])) {
+            foreach ($lockedImages['newest'] as $index => $lockedImage) {
+                ImageManager::updateLockedEntry($lockedImage, [
+                    'status' => 'publish',
+                    'record' => $locked['id'],
+                    'position' => $index + 1,
+                    'modified' => $time
+                ]);
+            }
+
+            foreach ($lockedImages['delete'] as $lockedImage)
+                ImageManager::trashLocked($lockedImage);
+        }
+
+        $data['modified'] = $time;
+        $this->updateLockedEntry($locked, $data);
+    }
+
     public function trashLocked(Model $locked): void {
         $allowedStatus = [
             'publish',
