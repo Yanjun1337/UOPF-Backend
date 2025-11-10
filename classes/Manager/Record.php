@@ -121,7 +121,7 @@ final class Record extends Manager {
                 if ($lockedParent['type'] !== $type || $lockedParent['status'] !== 'publish')
                     throw new RecordUpdateException('Parent is invalid.');
 
-                if (isset($lockedAffiliatedTo) && $lockedAffiliatedTo['id'] !== $lockedParent['id'])
+                if (isset($lockedAffiliatedTo) && $lockedAffiliatedTo['id'] !== $lockedParent['affiliated_to'])
                     throw new RecordUpdateException('Parent is affiliated to a different post.');
             }
 

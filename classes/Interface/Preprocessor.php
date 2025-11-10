@@ -110,7 +110,7 @@ final class Preprocessor {
                 if ($embedded) {
                     return $data->getStructure();
                 } elseif (in_array($path . '{}', $this->embedding, true)) {
-                    $this->embedding[] = "{$path}.{$instance->field}{}";
+                    $this->embedding[] = "{$path}.{$data->field}{}";
                     return $data->getStructure();
                 } else {
                     return $data->value;
@@ -241,6 +241,19 @@ final class Preprocessor {
             }
         }
 
+        switch ($record['type']) {
+            case 'post':
+                return $this->preparePost($record);
+
+            case 'comment':
+                return $this->prepareComment($record);
+
+            default:
+                $this->throwUnprocessableException();
+        }
+    }
+
+    protected function preparePost(RecordModel $record): array {
         $preprocessed = [
             'id' => $record['id'],
             'type' => $record['type'],
@@ -276,6 +289,48 @@ final class Preprocessor {
 
             $preprocessed['root'] = new EmbeddableStructure(
                 $record->getRoot()['id'],
+                [Services::getInstance()->recordManager, 'fetchEntry']
+            );
+        }
+
+        if (($platform = $record->getPlatform()) !== null)
+            $preprocessed['platform'] = $platform;
+
+        $preprocessed['images'] = $this->preprocessRecordImages($record);
+        return $preprocessed;
+    }
+
+    protected function prepareComment(RecordModel $record): array {
+        $preprocessed = [
+            'id' => $record['id'],
+            'type' => $record['type'],
+            'status' => $record['status'],
+            'created' => $record['created'],
+            'modified' => $record['modified'],
+            'depth' => $record->getDepth(),
+            'content' => $this->preprocessEditable('content', $record),
+
+            'post' => new EmbeddableStructure(
+                $record['affiliated_to'],
+                [Services::getInstance()->recordManager, 'fetchEntry']
+            ),
+
+            'user' => new EmbeddableStructure(
+                $record['user'],
+                [Services::getInstance()->userManager, 'fetchEntry']
+            ),
+
+            'statistics' => [
+                'likes' => $record['_likes'],
+                'dislikes' => $record['_dislikes'],
+                'replies' => $record['_reposts']
+            ]
+        ];
+
+        if (isset($record['parent'])) {
+            $preprocessed['parent'] = new EmbeddableRecursiveStructure(
+                $record['parent'],
+                'parent',
                 [Services::getInstance()->recordManager, 'fetchEntry']
             );
         }

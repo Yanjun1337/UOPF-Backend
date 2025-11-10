@@ -7,6 +7,7 @@ use UOPF\Utilities;
 use UOPF\Exception;
 use UOPF\ModelFieldType;
 use UOPF\DatabaseLockType;
+use UOPF\RetrievedEntries;
 use UOPF\Facade\Database;
 use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\Topic as TopicManager;
@@ -95,6 +96,67 @@ final class Record extends Model {
             $root = $parent;
 
         return $root;
+    }
+
+    public function getDepth(): int {
+        if ($parent = $this->getParent())
+            return 1 + $parent->getDepth();
+        else
+            return 1;
+    }
+
+    public function getChildrenRecursively(
+        int $page,
+        int $perPage,
+        string $order,
+        string $orderby,
+        ?array $exclude = null
+    ): RetrievedEntries {
+        $limit = Database::getPagingLimit($perPage, $page);
+
+        if (is_array($limit))
+            $limitClause = sprintf('%1$s, %2$s', $limit[0], $limit[1]);
+        else
+            $limitClause = strval($limit);
+
+        if (empty($exclude)) {
+            $where = '';
+        } else {
+            $where = sprintf(
+                'WHERE `id` NOT IN (%s)',
+                implode(', ', $exclude)
+            );
+        }
+
+        $sql = trim("
+SELECT SQL_CALC_FOUND_ROWS * FROM (
+    SELECT * FROM (
+        SELECT * FROM `records`
+        WHERE
+            `type` = :type AND
+            `status` = :status AND
+            `affiliated_to` = :affiliated_to AND
+            `parent` IS NOT NULL
+        ORDER BY `parent`, `id`
+    ) `sorted`, (
+        SELECT @pv := :current
+    ) `initialization`
+    WHERE
+        find_in_set(`parent`, @pv) AND
+        length(@pv := concat(@pv, ',', `id`))
+    ORDER BY `parent`, `id`
+) `filtered`
+{$where}
+ORDER BY `{$orderby}` {$order}
+LIMIT {$limitClause};
+        ");
+
+        return RecordManager::queryEntriesArbitrarily($sql, [
+            ':type' => $this->data['type'],
+            ':affiliated_to' => $this->data['affiliated_to'],
+            ':current' => $this->data['id'],
+            ':status' => 'publish'
+        ]);
     }
 
     public function getPlatform(): ?string {

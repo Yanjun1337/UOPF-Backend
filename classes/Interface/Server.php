@@ -107,6 +107,7 @@ final class Server {
         if (isset($this->router))
             return $this->router;
 
+        $id = '(?P<id>[1-9]+\d*)';
         $user = '(?P<id>[1-9]+\d*|current)';
         $prefix = 'UOPF\\Interface\Endpoint\\';
 
@@ -173,8 +174,26 @@ final class Server {
         ));
 
         $this->router->register(new Route(
-            uri: "posts/{$user}",
+            uri: "posts/{$id}",
             controller: ["{$prefix}PostsId", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: 'comments',
+            controller: ["{$prefix}Comments", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: "comments/{$id}",
+            controller: ["{$prefix}CommentsId", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: "comments/{$id}/children",
+            controller: ["{$prefix}CommentsChildren", 'serve'],
             isDirectory: true
         ));
 

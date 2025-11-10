@@ -150,6 +150,22 @@ abstract class Manager {
     }
 
     /**
+     * Queries entries from the database using arbitrary SQL.
+     */
+    public function queryEntriesArbitrarily(string $sql, array $parameters): RetrievedEntries {
+        $statement = Database::getProperty('pdo')->prepare($sql);
+        $statement->execute($parameters);
+
+        $data = array_values($statement->fetchAll());
+        $entries = array_map([$this, 'initializeEntry'], $data);
+
+        if (strpos(trim($sql), 'SELECT SQL_CALC_FOUND_ROWS ') === 0)
+            return new RetrievedEntries($entries, Database::fetchTotalRows());
+        else
+            return new RetrievedEntries($entries);
+    }
+
+    /**
      * Increments a field of a locked entry.
      */
     public function incrementLockedEntryField(Model $locked, string $field, int $step = 1): void {
