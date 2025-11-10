@@ -173,13 +173,13 @@ final class Record extends Model {
     }
 
     public static function renderReferencesInText(string $text): string {
-        $separator = '/((?:#|@)(?:[^\s#@]{1,128}))/';
+        $separator = '/((?:#|@)(?:[a-zA-Z0-9_\-]{1,32}))/';
         $split = preg_split($separator, $text, -1, PREG_SPLIT_DELIM_CAPTURE);
         return implode('', array_map([static::class, 'renderSplitBlock'], $split));
     }
 
     protected static function renderSplitBlock(string $text): string {
-        if (preg_match('/^(#|@)([^\s#@]{1,128})$/', $text, $matches) > 0)
+        if (preg_match('/^(#|@)([a-zA-Z0-9_\-]{1,32})$/', $text, $matches) > 0)
             return static::renderReferenceInContent( $matches );
         else
             return Utilities::escape($text);

@@ -62,7 +62,7 @@ final class Topic extends Manager {
     }
 
     public function extractFromText(string $text): array {
-        preg_match_all('/#([^\s#@]{1,128})/', $text, $matches);
+        preg_match_all('/#([a-zA-Z0-9_\-]{1,32})/', $text, $matches);
         return array_values(array_unique($matches[1]));
     }
 
