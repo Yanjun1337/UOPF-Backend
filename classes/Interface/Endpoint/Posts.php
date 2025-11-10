@@ -11,6 +11,7 @@ use UOPF\Facade\Manager\Record as RecordManager;
 use UOPF\Interface\Endpoint;
 use UOPF\Interface\Exception\ParameterException;
 use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
+use UOPF\Validator\StringValidator;
 use UOPF\Validator\BooleanValidator;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\EnumerationValidator;
@@ -23,7 +24,6 @@ use UOPF\Validator\Extension\PageNumberValidator;
 use UOPF\Validator\Extension\RecordTitleValidator;
 use UOPF\Validator\Extension\RecordContentValidator;
 use UOPF\Validator\Extension\NumberPerPageValidator;
-use UOPF\Validator\Extension\SearchKeywordsValidator;
 use UOPF\Exception\RecordUpdateException;
 
 /**
@@ -75,7 +75,11 @@ final class Posts extends Endpoint {
 
             'search' => new DictionaryValidatorElement(
                 label: 'Search Keywords',
-                validator: new SearchKeywordsValidator()
+
+                validator: new StringValidator(
+                    allowEmpty: false,
+                    max: 1024
+                )
             ),
 
             'indexed' => new DictionaryValidatorElement(
@@ -149,6 +153,13 @@ final class Posts extends Endpoint {
             'ORDER' => [$orderby => $filtered['order']],
             'TOTAL' => true
         ];
+
+        if (isset($filtered['search'])) {
+            $where['MATCH'] = [
+                'keyword' => $filtered['search'],
+                'columns' => ['title', 'content']
+            ];
+        }
 
         $retrieved = RecordManager::queryEntries($where);
         $entries = $retrieved->entries;
