@@ -69,7 +69,7 @@ final class Topic extends Manager {
     public function extractFromHTML(string $html): array {
         $topics = [];
 
-        foreach (Utilities::eachText($html) as $text)
+        foreach (Utilities::textEach($html) as $text)
             $topics = array_merge($topics, $this->extractFromText($text));
 
         return array_values(array_unique($topics));

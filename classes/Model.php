@@ -37,13 +37,13 @@ abstract class Model implements ArrayAccess {
      * Renders an editable field.
      */
     public function renderField(string $field): string {
-        $this->throwsUnsupportedEditableFieldException();
+        $this->throwUnsupportedEditableFieldException();
     }
 
     /**
      * Throws an "Unsupported editable field" exception.
      */
-    protected function throwsUnsupportedEditableFieldException(): never {
+    protected function throwUnsupportedEditableFieldException(): never {
         throw new Exception('Unsupported editable field.');
     }
 

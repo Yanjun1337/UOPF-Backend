@@ -3,14 +3,16 @@ declare(strict_types=1);
 namespace UOPF\Interface;
 
 use UOPF\Model;
+use UOPF\Services;
 use UOPF\Exception as SystemException;
 use UOPF\Model\User as UserModel;
 use UOPF\Model\Image as ImageModel;
 use UOPF\Model\Record as RecordModel;
 use UOPF\Model\TheCase as CaseModel;
 use UOPF\Model\Relationship as RelationshipModel;
-use UOPF\Interface\Embeddable\Entry as EmbeddableEntry;
 use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
+use UOPF\Interface\Embeddable\Structure as EmbeddableStructure;
+use UOPF\Interface\Embeddable\RecursiveStructure as EmbeddableRecursiveStructure;
 
 /**
  * Return Data Preprocessor
@@ -88,11 +90,11 @@ final class Preprocessor {
         $embedded = in_array($path, $this->embedding, true);
 
         switch (true) {
-            case $data instanceof EmbeddableEntry:
+            case $data instanceof EmbeddableStructure:
                 if ($embedded)
-                    return $data->getEntry();
+                    return $data->getStructure();
                 else
-                    return $data->id;
+                    return $data->value;
 
             case $data instanceof EmbeddableList:
                 $preprocessed = [];
@@ -103,6 +105,16 @@ final class Preprocessor {
 
                 array_pop($this->stack);
                 return $preprocessed;
+
+            case $data instanceof EmbeddableRecursiveStructure:
+                if ($embedded) {
+                    return $data->getStructure();
+                } elseif (in_array($path . '{}', $this->embedding, true)) {
+                    $this->embedding[] = "{$path}.{$instance->field}{}";
+                    return $data->getStructure();
+                } else {
+                    return $data->value;
+                }
 
             default:
                 throw new SystemException('Unsupported type of embeddable value.');
@@ -164,8 +176,12 @@ final class Preprocessor {
             ]
         ];
 
-        if (isset($image['user']))
-            $preprocessed['user'] = new EmbeddableEntry($image['user'], 'user');
+        if (isset($image['user'])) {
+            $preprocessed['user'] = new EmbeddableStructure(
+                $image['user'],
+                [Services::getInstance()->userManager, 'fetchEntry']
+            );
+        }
 
         if ($this->context->isAdministrative() && isset($image['record']))
             $preprocessed['record'] = $image['record'];
@@ -181,8 +197,12 @@ final class Preprocessor {
             'time' => $case['modified']
         ];
 
-        if (isset($case['user']))
-            $preprocessed['user'] = new EmbeddableEntry($case['user'], 'user');
+        if (isset($case['user'])) {
+            $preprocessed['user'] = new EmbeddableStructure(
+                $case['user'],
+                [Services::getInstance()->userManager, 'fetchEntry']
+            );
+        }
 
         return $preprocessed;
     }
@@ -198,9 +218,73 @@ final class Preprocessor {
     }
 
     protected function preprocessRecord(RecordModel $record): array {
-        return [
-            'id' => $record['id']
+        if (!$this->context->isAdministrative()) {
+            if ($record['status'] === 'trashed') {
+                return [
+                    'id' => $record['id'],
+                    'type' => $record['type'],
+                    'status' => $record['status']
+                ];
+            }
+
+            if ($record['status'] == 'blocked') {
+                return [
+                    'id' => $record['id'],
+                    'type' => $record['type'],
+                    'status' => $record['status'],
+
+                    'user' => new EmbeddableStructure(
+                        $record['user'],
+                        [Services::getInstance()->userManager, 'fetchEntry']
+                    )
+                ];
+            }
+        }
+
+        $preprocessed = [
+            'id' => $record['id'],
+            'type' => $record['type'],
+            'status' => $record['status'],
+            'created' => $record['created'],
+            'modified' => $record['modified'],
+            'content' => $this->preprocessEditable('content', $record),
+
+            'user' => new EmbeddableStructure(
+                $record['user'],
+                [Services::getInstance()->userManager, 'fetchEntry']
+            ),
+
+            'statistics' => [
+                'likes' => $record['_likes'],
+                'dislikes' => $record['_dislikes'],
+                'comments' => $record['_comments'],
+                'reposts' => $record['_reposts']
+            ]
         ];
+
+        if (isset($record['title']))
+            $preprocessed['title'] = $this->preprocessEditable('title', $record);
+
+        if (isset($record['parent'])) {
+            $preprocessed['hierarchicalRenderedContent'] = $record->renderHierarchicalContent();
+
+            $preprocessed['parent'] = new EmbeddableRecursiveStructure(
+                $record['parent'],
+                'parent',
+                [Services::getInstance()->recordManager, 'fetchEntry']
+            );
+
+            $preprocessed['root'] = new EmbeddableStructure(
+                $record->getRoot()['id'],
+                [Services::getInstance()->recordManager, 'fetchEntry']
+            );
+        }
+
+        if (($platform = $record->getPlatform()) !== null)
+            $preprocessed['platform'] = $platform;
+
+        $preprocessed['images'] = $this->preprocessRecordImages($record);
+        return $preprocessed;
     }
 
     protected function preprocessEditable(string $field, Model $entry): array {
@@ -211,6 +295,19 @@ final class Preprocessor {
             $preprocessed['raw'] = $entry[$field];
 
         return $preprocessed;
+    }
+
+    protected function preprocessRecordImages(RecordModel $record): EmbeddableList {
+        $images = [];
+
+        foreach ($record->fetchImages() as $image) {
+            $images[] = new EmbeddableStructure(
+                $image['id'],
+                [Services::getInstance()->imageManager, 'fetchEntry']
+            );
+        }
+
+        return new EmbeddableList($images);
     }
 
     protected function parseEmbeddingInstruction(): array {

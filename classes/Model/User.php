@@ -13,6 +13,7 @@ use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
 final class User extends Model {
     public function renderField(string $field): string {
         switch ($field) {
+            case 'username':
             case 'display_name':
                 return Utilities::escape($this->data[$field]);
 
@@ -20,7 +21,7 @@ final class User extends Model {
                 return Utilities::wrapParagraphsAround(Utilities::escape($this->data[$field]));
 
             default:
-                $this->throwsUnsupportedEditableFieldException();
+                $this->throwUnsupportedEditableFieldException();
         }
     }
 

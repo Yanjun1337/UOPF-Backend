@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace UOPF;
 
 use Generator;
+use const PREG_SPLIT_DELIM_CAPTURE;
 
 /**
  * Utilities
@@ -24,9 +25,20 @@ abstract class Utilities {
         return "<p>{$rendered}</p>";
     }
 
-    public static function eachText(string $html): Generator {
+    public static function textEach(string $html): Generator {
         foreach (preg_split(static::getHTMLSeparator(), $html) as $block)
             yield static::unescape($block);
+    }
+
+    public static function textMap(callable $callback, string $html): string {
+        $separator = static::getHTMLSeparator();
+        $split = preg_split($separator, $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+        foreach ($split as $index => $block)
+            if (preg_match($separator, $block) <= 0)
+                $split[$index] = $callback($block);
+
+        return implode('', $split);
     }
 
     protected static function getHTMLSeparator(): string {
