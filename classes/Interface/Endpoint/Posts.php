@@ -2,26 +2,164 @@
 declare(strict_types=1);
 namespace UOPF\Interface\Endpoint;
 
-use ParentIterator;
 use UOPF\Response;
+use UOPF\Utilities;
 use UOPF\DatabaseLockType;
 use UOPF\Model\Record;
 use UOPF\Facade\Database;
 use UOPF\Facade\Manager\Record as RecordManager;
 use UOPF\Interface\Endpoint;
 use UOPF\Interface\Exception\ParameterException;
+use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
+use UOPF\Validator\BooleanValidator;
 use UOPF\Validator\DictionaryValidator;
+use UOPF\Validator\EnumerationValidator;
 use UOPF\Validator\DictionaryValidatorElement;
 use UOPF\Validator\Extension\IdValidator;
+use UOPF\Validator\Extension\OrderValidator;
 use UOPF\Validator\Extension\IdListValidator;
+use UOPF\Validator\Extension\ZeroableIdValidator;
+use UOPF\Validator\Extension\PageNumberValidator;
 use UOPF\Validator\Extension\RecordTitleValidator;
 use UOPF\Validator\Extension\RecordContentValidator;
+use UOPF\Validator\Extension\NumberPerPageValidator;
+use UOPF\Validator\Extension\SearchKeywordsValidator;
 use UOPF\Exception\RecordUpdateException;
 
 /**
  * Posts
  */
 final class Posts extends Endpoint {
+    public function read(Response $response): EmbeddableList {
+        $filtered = $this->filterQuery(new DictionaryValidator([
+            'page' => new DictionaryValidatorElement(
+                label: 'Page',
+                default: 1,
+                validator: new PageNumberValidator()
+            ),
+
+            'perPage' => new DictionaryValidatorElement(
+                label: 'Number per Page',
+                default: 10,
+                validator: new NumberPerPageValidator()
+            ),
+
+            'order' => new DictionaryValidatorElement(
+                label: 'Order',
+                default: OrderValidator::DESCENDING,
+                validator: new OrderValidator()
+            ),
+
+            'orderby' => new DictionaryValidatorElement(
+                label: 'Orderby',
+                default: 'created',
+
+                validator: new EnumerationValidator([
+                    'created',
+                    'likes',
+                    'reposts',
+                    'comments',
+                    'modified'
+                ])
+            ),
+
+            'parent' => new DictionaryValidatorElement(
+                label: 'Post Parent',
+                validator: new ZeroableIdValidator()
+            ),
+
+            'user' => new DictionaryValidatorElement(
+                label: 'Post Author',
+                validator: new ZeroableIdValidator()
+            ),
+
+            'search' => new DictionaryValidatorElement(
+                label: 'Search Keywords',
+                validator: new SearchKeywordsValidator()
+            ),
+
+            'indexed' => new DictionaryValidatorElement(
+                label: 'Indexing Entries',
+                default: false,
+                validator: new BooleanValidator()
+            ),
+
+            'specific' => new DictionaryValidatorElement(
+                label: 'Posts IDs',
+
+                validator: new IdListValidator(
+                    allowEmpty: false,
+                    maximum: 100
+                )
+            ),
+
+            'status' => new DictionaryValidatorElement(
+                label: 'Post Status',
+                default: 'publish',
+
+                validator: new EnumerationValidator([
+                    'publish',
+                    'all',
+                    'trashed'
+                ])
+            )
+        ]));
+
+        if (isset($filtered['user']) && $filtered === 0)
+            unset($filtered['user']);
+
+        $conditions = [
+            'type' => 'post',
+            'affiliated_to' => null
+        ];
+
+        if ($filtered['status'] === 'publish') {
+            $conditions['status'] = $filtered['status'];
+        } else {
+            if (!$this->isAdministrative())
+                $this->throwPermissionDeniedException();
+
+            if ($filtered['status'] !== 'all')
+                $conditions['status'] = $filtered['status'];
+        }
+
+        if (isset($filtered['parent']))
+            $conditions['parent'] = $filtered['parent'] === 0 ? null : $filtered['parent'];
+
+        if (isset($filtered['user']))
+            $conditions['user'] = $filtered['user'];
+
+        if ($filtered['orderby'] === 'created') {
+            $orderby = $filtered['orderby'];
+        } elseif ($filtered['orderby'] === 'modified') {
+            if ($this->isAdministrative())
+                $orderby = $filtered['orderby'];
+            else
+                $this->throwPermissionDeniedException();
+        } else {
+            $orderby = "_{$filtered['orderby']}";
+        }
+
+        if (isset($filtered['specific']))
+            $conditions['id'] = $filtered['specific'];
+
+        $where = [
+            'AND' => $conditions,
+            'LIMIT' => Database::getPagingLimit($filtered['perPage'], $filtered['page']),
+            'ORDER' => [$orderby => $filtered['order']],
+            'TOTAL' => true
+        ];
+
+        $retrieved = RecordManager::queryEntries($where);
+        $entries = $retrieved->entries;
+
+        if ($filtered['indexed'])
+            $entries = array_combine(Utilities::arrayColumn($entries, 'id'), $entries);
+
+        static::setPagingOnResponse($response, $retrieved->total, $filtered['perPage']);
+        return new EmbeddableList($entries);
+    }
+
     public function write(Response $response): Record {
         if (!$current = $this->request->user)
             $this->throwUnauthorizedException();

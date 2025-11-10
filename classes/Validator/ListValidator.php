@@ -10,6 +10,8 @@ class ListValidator extends Validator {
         public readonly ?string $separator = null,
         public readonly ?bool $trimSplitElement = null,
         public readonly ?bool $allowDuplication = null,
+        public readonly ?int $max = null,
+        public readonly ?int $min = null,
         public readonly ?Validator $elementValidator = null
     ) {}
 
@@ -27,6 +29,16 @@ class ListValidator extends Validator {
             }
         } elseif (!is_array($value)) {
             throw new ValidationException('Value must be a list.');
+        }
+
+        if (isset($this->min)) {
+            if (count($value) < $this->min)
+                throw new ValidationException("Value must contain at least {$this->min} elements.");
+        }
+
+        if (isset($this->max)) {
+            if (count($value) > $this->max)
+                throw new ValidationException("Value must contain at most {$this->max} elements.");
         }
 
         if (isset($this->elementValidator)) {

@@ -41,6 +41,19 @@ abstract class Utilities {
         return implode('', $split);
     }
 
+    /**
+     * Compared to `array_column()`, this method adds support for objects that implement
+     * `ArrayAccess`.
+     */
+    public static function arrayColumn(array $array, int|string $column): array {
+        $rows = [];
+
+        foreach ($array as $value)
+            $rows[] = $value[$column];
+
+        return $rows;
+    }
+
     protected static function getHTMLSeparator(): string {
         $opening = '(?:\s*(?:[A-z][A-z0-9]*)[^>]*';
         $closing = '\s*\/\s*(?:[A-z][A-z0-9]*)\s*)';
