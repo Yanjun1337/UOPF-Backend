@@ -2,13 +2,14 @@
 declare(strict_types=1);
 namespace UOPF\Interface\Endpoint;
 
+use UOPF\Services;
 use UOPF\Response;
 use UOPF\Facade\Database;
 use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\Relationship\User as UserRelationshipManager;
 use UOPF\Interface\Endpoint;
-use UOPF\Interface\Embeddable\Entry as EmbeddableEntry;
 use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
+use UOPF\Interface\Embeddable\Structure as EmbeddableStructure;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\DictionaryValidatorElement;
 use UOPF\Validator\Extension\OrderValidator;
@@ -61,7 +62,11 @@ final class UsersFollowers extends Endpoint {
         foreach ($retrieved->entries as $relationship) {
             $results[] = [
                 'relationship' => $relationship,
-                'user' => new EmbeddableEntry($relationship['subject'], 'user')
+
+                'user' => new EmbeddableStructure(
+                    $relationship['subject'],
+                    [Services::getInstance()->userManager, 'fetchEntry']
+                )
             ];
         }
 
