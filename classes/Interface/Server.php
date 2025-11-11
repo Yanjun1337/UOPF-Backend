@@ -251,6 +251,12 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'misc/recommended/users',
+            controller: ["{$prefix}RecommendedUsers", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 
