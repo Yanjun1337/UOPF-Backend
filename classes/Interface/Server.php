@@ -233,6 +233,12 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'images',
+            controller: ["{$prefix}Images", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 
