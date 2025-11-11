@@ -9,6 +9,7 @@ use UOPF\Facade\Database;
 use UOPF\Facade\Manager\Record as RecordManager;
 use UOPF\Interface\Endpoint;
 use UOPF\Interface\Exception\ParameterException;
+use UOPF\Interface\EntryWith\RecordWithChildren;
 use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
 use UOPF\Validator\StringValidator;
 use UOPF\Validator\BooleanValidator;
@@ -165,9 +166,8 @@ final class Comments extends Endpoint {
         $retrieved = RecordManager::queryEntries($where);
         $entries = $retrieved->entries;
 
-        if (isset($filtered['withChildren'])) {
-            // @TODO
-        }
+        if (isset($filtered['withChildren']))
+            $entries = RecordWithChildren::createList($entries);
 
         static::setPagingOnResponse($response, $retrieved->total, $filtered['perPage']);
         return new EmbeddableList($entries);

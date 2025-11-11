@@ -5,11 +5,13 @@ namespace UOPF\Interface;
 use UOPF\Model;
 use UOPF\Services;
 use UOPF\Exception as SystemException;
+use UOPF\RetrievedEntries;
 use UOPF\Model\User as UserModel;
 use UOPF\Model\Image as ImageModel;
 use UOPF\Model\Record as RecordModel;
 use UOPF\Model\TheCase as CaseModel;
 use UOPF\Model\Relationship as RelationshipModel;
+use UOPF\Interface\EntryWith\RecordWithChildren;
 use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
 use UOPF\Interface\Embeddable\Structure as EmbeddableStructure;
 use UOPF\Interface\Embeddable\RecursiveStructure as EmbeddableRecursiveStructure;
@@ -52,6 +54,9 @@ final class Preprocessor {
         switch (true) {
             case $data instanceof Embeddable:
                 return $this->preprocessEmbeddable($data);
+
+            case $data instanceof EntryWith:
+                return $this->preprocessEntryWith($data);
 
             case $data instanceof UserModel:
                 return $this->preprocessUser($data);
@@ -119,6 +124,28 @@ final class Preprocessor {
             default:
                 throw new SystemException('Unsupported type of embeddable value.');
         }
+    }
+
+    protected function preprocessEntryWith(EntryWith $data): mixed {
+        switch (true) {
+            case $data instanceof RecordWithChildren:
+                return $this->preprocessRecordWithChildren($data);
+
+            default:
+                throw new SystemException('Unsupported type of entry with additional fields.');
+        }
+    }
+
+    protected function preprocessRecordWithChildren(RecordWithChildren $data): array {
+        $preprocessed = $this->preprocessRecord($data->entry);
+        $children = $data->getChildren(3);
+
+        $preprocessed['children'] = [
+            'list' => new EmbeddableList($children->entries),
+            'hasMore' => $children->total > 3
+        ];
+
+        return $preprocessed;
     }
 
     protected function preprocessUser(UserModel $user): array {
