@@ -239,6 +239,18 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'topics',
+            controller: ["{$prefix}Topics", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: 'misc/topics',
+            controller: ["{$prefix}TopTopics", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 

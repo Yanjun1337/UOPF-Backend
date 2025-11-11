@@ -5,9 +5,9 @@ namespace UOPF\Interface;
 use UOPF\Model;
 use UOPF\Services;
 use UOPF\Exception as SystemException;
-use UOPF\RetrievedEntries;
 use UOPF\Model\User as UserModel;
 use UOPF\Model\Image as ImageModel;
+use UOPF\Model\Topic as TopicModel;
 use UOPF\Model\Record as RecordModel;
 use UOPF\Model\TheCase as CaseModel;
 use UOPF\Model\Relationship as RelationshipModel;
@@ -72,6 +72,9 @@ final class Preprocessor {
 
             case $data instanceof RecordModel:
                 return $this->preprocessRecord($data);
+
+            case $data instanceof TopicModel:
+                return $this->preprocessTopic($data);
 
             default:
                 static::throwUnprocessableException();
@@ -406,6 +409,21 @@ final class Preprocessor {
 
         $preprocessed['images'] = $this->preprocessRecordImages($record);
         return $preprocessed;
+    }
+
+    protected function preprocessTopic(TopicModel $topic): array {
+        return [
+            'id' => $topic['id'],
+            'label' => $topic['label'],
+            'created' => $topic['created'],
+            'modified' => $topic['modified'],
+            'records' => $topic['_records'],
+
+            'createdFrom' => new EmbeddableStructure(
+                $topic['created_from'],
+                [Services::getInstance()->recordManager, 'fetchEntry']
+            )
+        ];
     }
 
     protected function preprocessEditable(string $field, Model $entry): array {
