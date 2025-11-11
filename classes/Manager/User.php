@@ -3,8 +3,10 @@ declare(strict_types=1);
 namespace UOPF\Manager;
 
 use UOPF\Manager;
+use UOPF\DatabaseLockType;
 use UOPF\Model\User as Model;
 use UOPF\Facade\Database;
+use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
 use UOPF\Validator\StringValidator;
 use UOPF\Validator\IntegerValidator;
 use UOPF\Validator\DictionaryValidator;
@@ -24,6 +26,15 @@ final class User extends Manager {
 
     public function getModelClass(): string {
         return Model::class;
+    }
+
+    public function pushNotificationToLockedUser(Model $locked): void {
+        if ($lockedMetadata = UserMetadataManager::fetchDirectly('unreadNotifications', $locked->data['id'], DatabaseLockType::write)) {
+            $current = $lockedMetadata->getDecodedValue();
+            UserMetadataManager::setLocked($lockedMetadata, $current + 1);
+        } else {
+            UserMetadataManager::add('unreadNotifications', 1, $locked->data['id']);
+        }
     }
 
     public function parseEntryFromToken(string $token): ?Model {

@@ -159,6 +159,7 @@ final class Record extends Manager {
                         throw new Exception('Author of parent record does not exist.');
 
                     UserManager::incrementLockedEntryField($lockedParentUser, '_reposts');
+                    UserManager::pushNotificationToLockedUser($lockedParentUser);
                 }
             }
 
@@ -168,8 +169,10 @@ final class Record extends Manager {
             if (isset($lockedAffiliatedTo)) {
                 $this->incrementLockedEntryField($lockedAffiliatedTo, '_comments');
 
-                // if (!$lockedAffiliatedToUser = UserManager::fetchEntryDirectly($lockedAffiliatedTo['user'], lock: DatabaseLockType::write))
-                    // throw new Exception('Author of record that this record is affiliated to does not exist.');
+                if ($lockedAffiliatedToUser = UserManager::fetchEntryDirectly($lockedAffiliatedTo['user'], lock: DatabaseLockType::read))
+                    UserManager::pushNotificationToLockedUser($lockedAffiliatedToUser);
+                else
+                    throw new Exception('Author of record that this record is affiliated to does not exist.');
             }
 
             foreach ($lockedImages as $index => $lockedImage) {

@@ -209,6 +209,30 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'users/current/notifications',
+            controller: ["{$prefix}Notifications", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: 'users/current/notifications/reposts',
+            controller: ["{$prefix}NotificationsReposts", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: 'users/current/notifications/comments',
+            controller: ["{$prefix}NotificationsComments", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: 'users/current/notifications/likes',
+            controller: ["{$prefix}NotificationsLikes", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 

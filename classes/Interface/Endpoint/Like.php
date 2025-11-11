@@ -64,6 +64,7 @@ final class Like extends Endpoint {
                 RecordManager::incrementLockedEntryField($lockedObject, '_dislikes', -1);
             }
 
+            UserManager::pushNotificationToLockedUser($lockedRecordUser);
             return $like;
         });
 
