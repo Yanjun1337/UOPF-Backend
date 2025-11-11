@@ -114,6 +114,9 @@ final class Session extends Endpoint {
         $days = $filtered['remember'] ? 365 : 1;
         static::setTokenOnResponse($response, $user, time() + (60 * 60 * 24 * $days));
 
+        $address = $this->request->getClientIp();
+        $user->refreshLastLogin($address);
+
         $this->request->setUser($user);
         return $user;
     }

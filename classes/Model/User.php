@@ -6,9 +6,16 @@ use UOPF\Model;
 use UOPF\Utilities;
 use UOPF\Exception;
 use UOPF\ModelFieldType;
+use UOPF\DatabaseLockType;
+use UOPF\Facade\Database;
+use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\Image as ImageManager;
 use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
 use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+
+use const JSON_ERROR_NONE;
 
 final class User extends Model {
     public function renderField(string $field): string {
@@ -88,6 +95,61 @@ final class User extends Model {
             return null;
 
         return $image->getSource();
+    }
+
+    public function refreshLastLogin(?string $address): void {
+        $lastLogin = [
+            'time' => time()
+        ];
+
+        if (isset($address)) {
+            $lastLogin['address'] = $address;
+
+            if (($location = static::getAddressLocation($address)) !== null)
+                $lastLogin['location'] = $location;
+        } else {
+            $lastLogin['address'] = 'Unknown';
+        }
+
+        Database::transaction(function () use (&$lastLogin) {
+            if ($locked = UserManager::fetchEntryDirectly($this->data['id'], lock: DatabaseLockType::read))
+                $locked->setMetadata('lastLogin', $lastLogin);
+        });
+    }
+
+    protected static function getAddressLocation(string $address): ?string {
+        $client = new Client([
+            'base_uri' => 'https://api.ip.sb',
+            'timeout'  => 3.0
+        ]);
+
+        try {
+            $response = $client->request('GET', "/geoip/{$address}");
+        } catch (GuzzleException) {
+            return null;
+        }
+
+        $body = strval($response->getBody());
+        $data = json_decode($body, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data))
+            return null;
+
+        $components = [];
+
+        if (isset($data['city']))
+            $components[] = $data['city'];
+
+        if (isset($data['region']))
+            $components[] = $data['region'];
+
+        if (isset($data['country']))
+            $components[] = $data['country'];
+
+        if (empty($components))
+            return null;
+        else
+            return implode(', ', $components);
     }
 
     public static function getSchema(): array {

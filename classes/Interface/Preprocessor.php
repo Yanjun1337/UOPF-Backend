@@ -184,6 +184,14 @@ final class Preprocessor {
                 'unreadNotifications' => intval($user->getMetadata('unreadNotifications'))
             ];
 
+            if ($lastLogin = $user->getMetadata('lastLogin')) {
+                $private['lastLogin'] = [
+                    'location' => $lastLogin['location'] ?? 'Unknown',
+                    'address' => $lastLogin['address'],
+                    'time' => $lastLogin['time']
+                ];
+            }
+
             $preprocessed['private'] = $private;
         }
 
