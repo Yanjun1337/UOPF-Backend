@@ -197,6 +197,18 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'like',
+            controller: ["{$prefix}Like", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: 'dislike',
+            controller: ["{$prefix}Dislike", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 

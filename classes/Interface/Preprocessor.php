@@ -235,12 +235,43 @@ final class Preprocessor {
     }
 
     protected function preprocessRelationship(RelationshipModel $relationship): array {
+        switch ($relationship['type']) {
+            case 'u':
+                return $this->preprocessUserRelationship($relationship);
+
+            case 'l':
+            case 'd':
+                return $this->preprocessLikeOrDislikeRelationship($relationship);
+
+            default:
+                $this->throwUnprocessableException();
+        }
+    }
+
+    protected function preprocessUserRelationship(RelationshipModel $relationship): array {
         return [
             'id' => $relationship['id'],
             'created' => $relationship['created'],
 
             'subject' => $relationship['subject'],
             'object' => $relationship['object']
+        ];
+    }
+
+    protected function preprocessLikeOrDislikeRelationship(RelationshipModel $relationship): array {
+        return [
+            'id' => $relationship['id'],
+            'created' => $relationship['created'],
+
+            'user' => new EmbeddableStructure(
+                $relationship['subject'],
+                [Services::getInstance()->userManager, 'fetchEntry']
+            ),
+
+            'record' => new EmbeddableStructure(
+                $relationship['object'],
+                [Services::getInstance()->recordManager, 'fetchEntry']
+            )
         ];
     }
 
@@ -270,17 +301,17 @@ final class Preprocessor {
 
         switch ($record['type']) {
             case 'post':
-                return $this->preparePost($record);
+                return $this->preprocessPost($record);
 
             case 'comment':
-                return $this->prepareComment($record);
+                return $this->preprocessComment($record);
 
             default:
                 $this->throwUnprocessableException();
         }
     }
 
-    protected function preparePost(RecordModel $record): array {
+    protected function preprocessPost(RecordModel $record): array {
         $preprocessed = [
             'id' => $record['id'],
             'type' => $record['type'],
@@ -327,7 +358,7 @@ final class Preprocessor {
         return $preprocessed;
     }
 
-    protected function prepareComment(RecordModel $record): array {
+    protected function preprocessComment(RecordModel $record): array {
         $preprocessed = [
             'id' => $record['id'],
             'type' => $record['type'],

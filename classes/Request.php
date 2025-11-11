@@ -9,14 +9,14 @@ final class Request extends SymfonyRequest {
     /**
      * The currently authenticated user.
      */
-    protected(set) User $user;
+    protected(set) ?User $user = null;
 
     public function getRoute(): string {
         $uri = explode('?', $this->getRequestUri())[0];
         return substr($uri, 1);
     }
 
-    public function setUser(User $user): void {
+    public function setUser(?User $user): void {
         $this->user = $user;
     }
 }

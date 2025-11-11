@@ -23,7 +23,6 @@ use Symfony\Component\HttpKernel\Controller\ArgumentResolver;
 use Symfony\Component\HttpKernel\Controller\ControllerResolver;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use UOPF\Model\Relationship;
 
 /**
  * Service Manager
@@ -80,6 +79,16 @@ final class Services {
     public readonly RelationshipManager $userRelationshipManager;
 
     /**
+     * The like relationship manager.
+     */
+    public readonly RelationshipManager $likeRelationshipManager;
+
+    /**
+     * The dislike relationship manager.
+     */
+    public readonly RelationshipManager $dislikeRelationshipManager;
+
+    /**
      * The router.
      */
     protected Router $router;
@@ -119,6 +128,8 @@ final class Services {
 
         // Initialize managers of relationship data tables.
         $this->userRelationshipManager = new RelationshipManager('u');
+        $this->likeRelationshipManager = new RelationshipManager('l');
+        $this->dislikeRelationshipManager = new RelationshipManager('d');
     }
 
     public function isInitialized(): bool {
