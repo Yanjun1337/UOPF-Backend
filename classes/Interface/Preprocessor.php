@@ -242,6 +242,15 @@ final class Preprocessor {
             );
         }
 
+        if ($case['type'] === 'report' && $this->context->isAdministrative()) {
+            $preprocessed['cause'] = $case['metadata']['reason'];
+
+            $preprocessed['record'] = new EmbeddableStructure(
+                $case['metadata']['record'],
+                [Services::getInstance()->recordManager, 'fetchEntry']
+            );
+        }
+
         return $preprocessed;
     }
 

@@ -257,6 +257,24 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'users/current/case',
+            controller: ["{$prefix}ReportRecord", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: 'cases/reports',
+            controller: ["{$prefix}CasesReports", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: "cases/reports/{$id}",
+            controller: ["{$prefix}CasesReportsId", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 
