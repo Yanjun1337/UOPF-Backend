@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace UOPF;
 
 use Generator;
+use League\CommonMark\CommonMarkConverter;
 use const PREG_SPLIT_DELIM_CAPTURE;
 
 /**
@@ -52,6 +53,15 @@ abstract class Utilities {
             $rows[] = $value[$column];
 
         return $rows;
+    }
+
+    public static function renderMarkdown(string $text): string {
+        $converter = new CommonMarkConverter([
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false
+        ]);
+
+        return strval($converter->convert($text));
     }
 
     protected static function getHTMLSeparator(): string {

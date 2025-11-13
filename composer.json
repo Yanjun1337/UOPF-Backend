@@ -22,6 +22,7 @@
         "ramsey/uuid": "^4.9",
         "phpmailer/phpmailer": "^6.11",
         "ezyang/htmlpurifier": "^4.19",
-        "whichbrowser/parser": "^2.1"
+        "whichbrowser/parser": "^2.1",
+        "league/commonmark": "^2.7"
     }
 }

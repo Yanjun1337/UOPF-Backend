@@ -38,7 +38,8 @@ final class Settings {
      */
     public function getPages(): array {
         return [
-            'General'
+            'General',
+            'StaticPage'
         ];
     }
 

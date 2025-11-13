@@ -281,6 +281,12 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'pages/(?P<name>[^/]+)',
+            controller: ["{$prefix}Pages", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 
