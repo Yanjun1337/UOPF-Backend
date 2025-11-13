@@ -30,7 +30,9 @@ final class General extends Page {
      */
     public function getGroups(): array {
         return [
-            'Addresses'
+            'Title',
+            'Addresses',
+            'SocialMedia'
         ];
     }
 }

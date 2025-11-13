@@ -6,21 +6,16 @@ use UOPF\Validator;
 use UOPF\Setting\Type\Metadata as MetadataField;
 use UOPF\Validator\Extension\URLValidator;
 
-final class FrontendAddress extends MetadataField {
+final class Instagram extends MetadataField {
     /**
      * The name of the setting field.
      */
-    protected(set) string $name = 'frontendAddress';
+    protected(set) string $name = 'social/instagram';
 
     /**
      * The label of the setting field.
      */
-    protected(set) string $label = 'Frontend URL';
-
-    /**
-     * The description of the setting field.
-     */
-    protected(set) string $description = 'The URL must end with a slash <code>/</code>.';
+    protected(set) string $label = 'Instagram';
 
     /**
      * The type of the setting field.
@@ -31,8 +26,6 @@ final class FrontendAddress extends MetadataField {
      * Returns the validator for the setting field.
      */
     public function getValidator(): Validator {
-        return new URLValidator(
-            hasTrailingSlash: true
-        );
+        return new URLValidator();
     }
 }

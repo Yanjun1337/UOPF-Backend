@@ -4,35 +4,35 @@ namespace UOPF\Setting\General\Field;
 
 use UOPF\Validator;
 use UOPF\Setting\Type\Metadata as MetadataField;
-use UOPF\Validator\Extension\URLValidator;
+use UOPF\Validator\StringValidator;
 
-final class FrontendAddress extends MetadataField {
+final class AllowedOrigins extends MetadataField {
     /**
      * The name of the setting field.
      */
-    protected(set) string $name = 'frontendAddress';
+    protected(set) string $name = 'allowedOrigins';
 
     /**
      * The label of the setting field.
      */
-    protected(set) string $label = 'Frontend URL';
+    protected(set) string $label = 'Allowed Origins';
 
     /**
      * The description of the setting field.
      */
-    protected(set) string $description = 'The URL must end with a slash <code>/</code>.';
+    protected(set) string $description = 'URLs allowed to access the backend. One per line.';
 
     /**
      * The type of the setting field.
      */
-    protected(set) string $type = 'text';
+    protected(set) string $type = 'textarea';
 
     /**
      * Returns the validator for the setting field.
      */
     public function getValidator(): Validator {
-        return new URLValidator(
-            hasTrailingSlash: true
+        return new StringValidator(
+            max: 65536
         );
     }
 }

@@ -6,16 +6,16 @@ use UOPF\Validator;
 use UOPF\Setting\Type\Metadata as MetadataField;
 use UOPF\Validator\Extension\URLValidator;
 
-final class FrontendAddress extends MetadataField {
+final class BackendAddress extends MetadataField {
     /**
      * The name of the setting field.
      */
-    protected(set) string $name = 'frontendAddress';
+    protected(set) string $name = 'backendAddress';
 
     /**
      * The label of the setting field.
      */
-    protected(set) string $label = 'Frontend URL';
+    protected(set) string $label = 'Backend URL';
 
     /**
      * The description of the setting field.
