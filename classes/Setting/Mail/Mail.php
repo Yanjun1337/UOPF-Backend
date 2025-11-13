@@ -30,7 +30,8 @@ final class Mail extends Page {
      */
     public function getGroups(): array {
         return [
-            'Registration'
+            'Registration',
+            'PasswordReset'
         ];
     }
 }

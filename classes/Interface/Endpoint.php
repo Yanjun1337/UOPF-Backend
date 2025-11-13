@@ -10,10 +10,12 @@ use UOPF\Response;
 use UOPF\Services;
 use UOPF\Exception as UOPFException;
 use UOPF\Model\User as UserModel;
+use UOPF\Model\TheCase as CaseModel;
 use UOPF\Validator\IntegerValidator;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Exception\CaptchaException;
 use UOPF\Exception\ValidationException;
+use UOPF\Exception\EmailSendingException;
 use UOPF\Exception\DictionaryValidationException;
 use UOPF\Interface\Exception\ParameterException;
 
@@ -300,6 +302,17 @@ abstract class Endpoint {
                 $exception->getLabeledMessage(),
                 $exception->elementKey
             );
+        }
+    }
+
+    /**
+     * Uses a case to send the validation code and throws an HTTP 500 error if it fails.
+     */
+    protected static function sendValidationCode(CaseModel $case): void {
+        try {
+            $case->sendValidationCode();
+        } catch (EmailSendingException $exception) {
+            throw new Exception('Failed to send email.', 500, previous: $exception);
         }
     }
 }

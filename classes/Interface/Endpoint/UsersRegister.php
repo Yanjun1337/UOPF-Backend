@@ -7,7 +7,6 @@ use UOPF\Response;
 use UOPF\Model\TheCase as TheCase;
 use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\TheCase as CaseManager;
-use UOPF\Exception\EmailSendingException;
 use UOPF\Exception\ValidationCodeException;
 use UOPF\Validator\StringValidator;
 use UOPF\Validator\DictionaryValidator;
@@ -16,7 +15,6 @@ use UOPF\Validator\Extension\UsernameValidator;
 use UOPF\Validator\Extension\UserPasswordValidator;
 use UOPF\Validator\Extension\CaptchaTokenValidator;
 use UOPF\Interface\Endpoint;
-use UOPF\Interface\Exception as InterfaceException;
 use UOPF\Interface\Exception\ParameterException;
 
 /**
@@ -79,12 +77,7 @@ final class UsersRegister extends Endpoint {
             throw new ParameterException($exception->getMessage(), previous: $exception);
         }
 
-        try {
-            $case->sendValidationCode();
-        } catch (EmailSendingException $exception) {
-            throw new InterfaceException('Failed to send email.', 500, previous: $exception);
-        }
-
+        static::sendValidationCode($case);
         return $case;
     }
 }

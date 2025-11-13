@@ -287,6 +287,18 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'users/reset/email',
+            controller: ["{$prefix}UsersResetEmail", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: 'users/reset',
+            controller: ["{$prefix}UsersReset", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 
