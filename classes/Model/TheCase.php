@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace UOPF\Model;
 
 use UOPF\Model;
+use UOPF\Utilities;
 use UOPF\Exception;
 use UOPF\ModelFieldType;
 use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
@@ -31,8 +32,8 @@ final class TheCase extends Model {
     }
 
     protected static function sendValidationCodeEmail(string $type, string $to, string $code): void {
-        $subjectTemplate = SystemMetadataManager::get("email/{$type}/subject");
-        $bodyTemplate = SystemMetadataManager::get("email/{$type}/body");
+        $subjectTemplate = SystemMetadataManager::get("mail/{$type}/subject");
+        $bodyTemplate = SystemMetadataManager::get("mail/{$type}/body");
 
         if (
             !isset($subjectTemplate) ||
@@ -53,6 +54,7 @@ final class TheCase extends Model {
         $subject = str_replace($keywords, $replacements, $subjectTemplate);
         $body = str_replace($keywords, $replacements, $bodyTemplate);
 
+        $body = Utilities::renderMarkdown($body);
         static::sendEmail($to, $subject, $body);
     }
 
@@ -84,7 +86,7 @@ final class TheCase extends Model {
             $mailer->Port = $_ENV['UOPF_SMTP_PORT'];
 
             $from = $_ENV['UOPF_SMTP_USERNAME'];
-            $name = 'UOPF'; // @TODO
+            $name = SystemMetadataManager::get('title');
 
             $mailer->setFrom($from, $name);
             $mailer->addReplyTo($from, $name);
@@ -93,6 +95,7 @@ final class TheCase extends Model {
             $mailer->Subject = $subject;
             $mailer->Body = $body;
 
+            $mailer->isHTML(true);
             $mailer->send();
         } catch (MailerException $exception) {
             throw new EmailSendingException('Failed to send email via SMTP.', previous: $exception);
