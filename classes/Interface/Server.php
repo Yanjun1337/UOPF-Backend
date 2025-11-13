@@ -275,6 +275,12 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'settings/(?P<name>[a-z]+)',
+            controller: ["{$prefix}SettingPage", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 
