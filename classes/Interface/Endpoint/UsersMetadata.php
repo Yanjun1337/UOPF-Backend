@@ -9,13 +9,18 @@ use UOPF\Model\User;
 use UOPF\Facade\Database;
 use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\Image as ImageManager;
+use UOPF\Facade\Manager\TheCase as CaseManager;
 use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\DictionaryValidatorElement;
+use UOPF\Validator\Extension\IdValidator;
 use UOPF\Validator\Extension\UserDomainValidator;
+use UOPF\Validator\Extension\UserPasswordValidator;
+use UOPF\Validator\Extension\ValidationCodeValidator;
 use UOPF\Validator\Extension\UserDisplayNameValidator;
 use UOPF\Validator\Extension\UserDescriptionValidator;
 use UOPF\Exception\ImageUploadException;
+use UOPF\Exception\ValidationCodeException;
 use UOPF\Exception\DuplicateUniqueColumnException;
 use UOPF\Interface\Endpoint;
 use UOPF\Interface\Exception\ParameterException;
@@ -48,6 +53,9 @@ final class UsersMetadata extends Endpoint {
 
             case 'background':
                 return $this->setBackground($user);
+
+            case 'password':
+                return $this->setPassword($user);
 
             default:
                 $this->throwNotFoundException();
@@ -189,5 +197,71 @@ final class UsersMetadata extends Endpoint {
             ImageManager::publishLocked($lockedImage);
             return $lockedUser;
         });
+    }
+
+    protected function setPassword(User $user): User {
+        $filtered = $this->filterBody(new DictionaryValidator([
+            'case' => new DictionaryValidatorElement(
+                label: 'Case',
+                validator: new IdValidator()
+            ),
+
+            'code' => new DictionaryValidatorElement(
+                label: 'Validation Code',
+                validator: new ValidationCodeValidator()
+            ),
+
+            'value' => new DictionaryValidatorElement(
+                label: 'New Password',
+                validator: new UserPasswordValidator()
+            )
+        ]));
+
+        $userOrException = Database::transaction(function () use (&$user, &$filtered) {
+            if (isset($filtered['case'])) {
+                if (!isset($filtered['code']))
+                    throw new ParameterException('Validation code is required.', 'code');
+
+                if (!$lockedCase = CaseManager::fetchEntryDirectly($filtered['case'], lock: DatabaseLockType::write))
+                    throw new ParameterException('Case does not exist.', 'case');
+
+                if ($lockedCase['type'] !== 'auth/password' || $lockedCase['user'] !== $user['id'])
+                    throw new ParameterException('Invalid case.', 'case');
+
+                try {
+                    CaseManager::validateLockedEmailValidationCode($lockedCase, $filtered['code']);
+                } catch (ValidationCodeException $exception) {
+                    return new ParameterException($exception->getMessage(), previous: $exception);
+                }
+
+                if (!$lockedUser = UserManager::fetchEntryDirectly($lockedCase['user'], lock: DatabaseLockType::read))
+                    $this->throwInconsistentInternalDataException();
+
+                if (isset($filtered['value']))
+                    $lockedUser->setMetadata('password', UserManager::createPasswordHash($filtered['value']));
+                else
+                    return $lockedUser;
+
+                CaseManager::closeLockedValidationCode($lockedCase);
+                return $lockedUser;
+            } else {
+                if (!$this->isAdministrative())
+                    $this->throwPermissionDeniedException();
+
+                if (!isset($filtered['value']))
+                    throw new ParameterException('New password is required.', 'value');
+
+                if (!$lockedUser = UserManager::fetchEntryDirectly($user['id'], lock: DatabaseLockType::read))
+                    $this->throwInconsistentInternalDataException();
+
+                $lockedUser->setMetadata('password', UserManager::createPasswordHash($filtered['value']));
+                return $lockedUser;
+            }
+        });
+
+        if ($userOrException instanceof \Exception)
+            throw $userOrException;
+        else
+            return $userOrException;
     }
 }

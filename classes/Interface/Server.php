@@ -299,6 +299,12 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'users/current/authentication',
+            controller: ["{$prefix}UsersAuthentication", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 
