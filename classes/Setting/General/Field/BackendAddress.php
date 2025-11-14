@@ -28,6 +28,11 @@ final class BackendAddress extends MetadataField {
     protected(set) string $type = 'text';
 
     /**
+     * The default value of the setting field.
+     */
+    protected(set) mixed $default = 'https://api.example.com/';
+
+    /**
      * Returns the validator for the setting field.
      */
     public function getValidator(): Validator {

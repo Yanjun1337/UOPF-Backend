@@ -87,6 +87,14 @@ abstract class Page {
     }
 
     /**
+     * Fill the default values of the setting fields in the setting page.
+     */
+    public function fillDefaults(): void {
+        foreach ($this->groups as $group)
+            $group->fillDefaults();
+    }
+
+    /**
      * Returns the schema of the setting page.
      */
     public function getSchema(): array {

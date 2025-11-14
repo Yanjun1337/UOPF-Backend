@@ -29,6 +29,11 @@ abstract class Field {
     protected(set) string $type;
 
     /**
+     * The default value of the setting field.
+     */
+    protected(set) mixed $default;
+
+    /**
      * Returns the validator for the setting field.
      */
     abstract public function getValidator(): Validator;
@@ -42,6 +47,11 @@ abstract class Field {
      * Sets the value of the setting field.
      */
     abstract public function set(mixed $value): void;
+
+    /**
+     * Fill the default value of the setting field.
+     */
+    public function fillDefault(): void {}
 
     /**
      * Returns the schema of the setting field.

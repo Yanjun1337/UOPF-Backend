@@ -60,6 +60,14 @@ abstract class Group {
     }
 
     /**
+     * Fill the default values of the registered setting fields in the setting group.
+     */
+    public function fillDefaults(): void {
+        foreach ($this->fields as $field)
+            $field->fillDefault();
+    }
+
+    /**
      * Returns the schema of the setting group.
      */
     public function getSchema(): array {

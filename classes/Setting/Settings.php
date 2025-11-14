@@ -45,6 +45,14 @@ final class Settings {
     }
 
     /**
+     * Fill the default values of the setting fields in all setting pages.
+     */
+    public function fillDefaults(): void {
+        foreach ($this->pages as $page)
+            $page->fillDefaults();
+    }
+
+    /**
      * Returns the instance.
      */
     public static function getInstance(): self {

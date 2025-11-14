@@ -28,6 +28,11 @@ final class AllowedOrigins extends MetadataField {
     protected(set) string $type = 'textarea';
 
     /**
+     * The default value of the setting field.
+     */
+    protected(set) mixed $default = '';
+
+    /**
      * Returns the validator for the setting field.
      */
     public function getValidator(): Validator {

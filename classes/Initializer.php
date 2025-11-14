@@ -5,8 +5,9 @@ namespace UOPF;
 use PDOException;
 use UOPF\Facade\Cache;
 use UOPF\Facade\Database;
+use UOPF\Facade\Settings as SettingsManager;
 use UOPF\Facade\Manager\User as UserManager;
-use UOPF\Facade\Manager\Metadata\System as SystemMetadata;
+use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
 use UOPF\Exception\DatabaseException;
 use PragmaRX\Random\Random;
 
@@ -30,9 +31,12 @@ abstract class Initializer {
 
         // 3. Create system metadata.
         foreach (static::getInitialMetadata() as $name => $value)
-            SystemMetadata::add($name, $value);
+            SystemMetadataManager::add($name, $value);
 
-        // 4. Create the default administrator user.
+        // 4. Fill the default values of settings.
+        SettingsManager::fillDefaults();
+
+        // 5. Create the default administrator user.
         UserManager::register(
             role: 'administrator',
             username: $username,
@@ -41,7 +45,7 @@ abstract class Initializer {
             passwordHash: UserManager::createPasswordHash($password)
         );
 
-        // 5. Flush cache.
+        // 6. Flush cache.
         Cache::flush();
     }
 
@@ -182,8 +186,6 @@ CREATE TABLE `views` (
         $key = $random->pattern('[a-zA-Z0-9_]')->size(256)->get();
 
         return [
-            'frontendAddress' => 'https://www.example.com/',
-            'backendAddress' => 'https://api.example.com/',
             'initialized' => time(),
             'tokenKey' => $key
         ];
