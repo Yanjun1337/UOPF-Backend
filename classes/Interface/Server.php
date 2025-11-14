@@ -305,6 +305,12 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'users/current/timeline',
+            controller: ["{$prefix}Timeline", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 
