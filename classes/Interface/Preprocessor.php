@@ -346,6 +346,7 @@ final class Preprocessor {
             ),
 
             'statistics' => [
+                'views' => $record->getViews(),
                 'likes' => $record['_likes'],
                 'dislikes' => $record['_dislikes'],
                 'comments' => $record['_comments'],

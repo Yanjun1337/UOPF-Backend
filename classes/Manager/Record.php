@@ -375,6 +375,30 @@ final class Record extends Manager {
         ]);
     }
 
+    public function countEntryViews(int $id): void {
+        $this->incrementEntryViews($id, 1);
+    }
+
+    public function incrementEntryViews(int $id, int $step): void {
+        Database::transaction(function () use (&$id, &$step) {
+            if (!$locked = $this->fetchEntryDirectly($id, lock: DatabaseLockType::read))
+                throw new Exception('Record does not exist.');
+
+            $sql = trim('
+            INSERT INTO `views` (`record`, `count`)
+            VALUES (:record, :step) ON DUPLICATE KEY
+            UPDATE `count` = `count` + :step
+            ');
+
+            $statement = Database::getProperty('pdo')->prepare($sql);
+
+            $statement->execute([
+                ':record' => $locked['id'],
+                ':step' => $step
+            ]);
+        });
+    }
+
     protected static function sanitizeLongPostContent(string $value, array $images = []): string {
         $purified = static::purifyLongPostContent($value);
 

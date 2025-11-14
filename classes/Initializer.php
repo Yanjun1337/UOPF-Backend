@@ -165,6 +165,15 @@ CREATE TABLE `topics` (
     UNIQUE KEY `label` (`label`),
     KEY `count` (`_records`)
 ) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
+
+CREATE TABLE `views` (
+	`id` bigint(20) unsigned NOT NULL auto_increment,
+	`record` bigint(20) unsigned NOT NULL,
+	`count` bigint(20) unsigned NOT NULL default 0,
+
+	PRIMARY KEY (`id`),
+	UNIQUE KEY `record` (`record`)
+) DEFAULT CHARACTER SET {$charset} COLLATE {$collation};
         ");
     }
 

@@ -83,6 +83,9 @@ ORDER BY `created` DESC LIMIT {$perPage}"
             $hasMore = false;
         }
 
+        foreach ($entries as $entry)
+            RecordManager::countEntryViews($entry['id']);
+
         $response->headers->set('X-API-More', $hasMore ? 'true' : 'false');
         return new EmbeddableList($entries);
     }

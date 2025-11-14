@@ -164,6 +164,9 @@ final class Posts extends Endpoint {
         $retrieved = RecordManager::queryEntries($where);
         $entries = $retrieved->entries;
 
+        foreach ($entries as $entry)
+            RecordManager::countEntryViews($entry['id']);
+
         if ($filtered['indexed'])
             $entries = array_combine(Utilities::arrayColumn($entries, 'id'), $entries);
 

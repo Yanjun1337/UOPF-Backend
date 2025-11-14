@@ -159,6 +159,17 @@ LIMIT {$limitClause};
         ]);
     }
 
+    public function getViews(): int {
+        $data = Database::select('views', 'count', [
+            'record' => $this->data['id']
+        ]);
+
+        if (isset($data[0]))
+            return intval($data[0]);
+        else
+            return 0;
+    }
+
     public function getPlatform(): ?string {
         if (($userAgent = $this->data['user_agent']) === null)
             return null;
