@@ -174,8 +174,8 @@ final class Services {
 
     public function loadCLI(): void {
         try {
-            $instance = new CommandLineInterface();
-            $instance->run();
+            $instance = @new CommandLineInterface();
+            @$instance->run();
         } catch (Exception $exception) {
             $this->terminate($exception->getMessage());
         }
