@@ -84,7 +84,7 @@ final class Metadata extends Manager {
     }
 
     protected static function determineValueType(mixed $value): MetadataType {
-        switch ($value) {
+        switch (true) {
             case is_string($value):
                 return MetadataType::string;
 
