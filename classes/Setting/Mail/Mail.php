@@ -32,7 +32,9 @@ final class Mail extends Page {
         return [
             'Registration',
             'PasswordReset',
-            'AuthenticationPassword'
+            'AuthenticationPassword',
+            'AuthenticationEmail',
+            'UpdateEmail'
         ];
     }
 }

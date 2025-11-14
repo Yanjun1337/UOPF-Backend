@@ -3,7 +3,6 @@ declare(strict_types=1);
 namespace UOPF\Interface\Endpoint;
 
 use UOPF\Response;
-use UOPF\Services;
 use UOPF\DatabaseLockType;
 use UOPF\Model\TheCase;
 use UOPF\Facade\Database;
@@ -11,10 +10,8 @@ use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\TheCase as CaseManager;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\DictionaryValidatorElement;
-use UOPF\Validator\StringValidator;
 use UOPF\Validator\EnumerationValidator;
 use UOPF\Interface\Exception\ParameterException;
-use UOPF\Validator\Extension\CaptchaTokenValidator;
 use UOPF\Interface\Endpoint;
 use UOPF\Exception\ValidationCodeException;
 
@@ -32,7 +29,8 @@ final class UsersAuthentication extends Endpoint {
                 required: true,
 
                 validator: new EnumerationValidator([
-                    'password'
+                    'password',
+                    'email'
                 ])
             )
         ]));

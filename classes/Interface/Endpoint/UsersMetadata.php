@@ -11,6 +11,7 @@ use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\Image as ImageManager;
 use UOPF\Facade\Manager\TheCase as CaseManager;
 use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
+use UOPF\Validator\StringValidator;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\DictionaryValidatorElement;
 use UOPF\Validator\Extension\IdValidator;
@@ -60,6 +61,9 @@ final class UsersMetadata extends Endpoint {
 
             case 'password':
                 return $this->setPassword($user);
+
+            case 'email':
+                return $this->setEmail($user);
 
             default:
                 $this->throwNotFoundException();
@@ -284,5 +288,74 @@ final class UsersMetadata extends Endpoint {
             throw $userOrException;
         else
             return $userOrException;
+    }
+
+    protected function setEmail(User $user): User {
+        $filtered = $this->filterBody(new DictionaryValidator([
+            'case' => new DictionaryValidatorElement(
+                label: 'Case',
+                validator: new IdValidator()
+            ),
+
+            'code' => new DictionaryValidatorElement(
+                label: 'Validation Code',
+                validator: new ValidationCodeValidator()
+            ),
+
+            'value' => new DictionaryValidatorElement(
+                label: 'New Email Address',
+
+                validator: new StringValidator(
+                    max: 128,
+                    format: 'email'
+                )
+            )
+        ]));
+
+        if (isset($filtered['case'])) {
+            if (!isset($filtered['code']))
+                throw new ParameterException('Validation code is required.', 'code');
+
+            $userOrException = Database::transaction(function () use (&$user, &$filtered) {
+                if (!$lockedCase = CaseManager::fetchEntryDirectly($filtered['case'], lock: DatabaseLockType::write))
+                    throw new ParameterException('Case does not exist.', 'case');
+
+                if ($lockedCase['type'] !== 'update/email' || $lockedCase['user'] !== $user['id'])
+                    throw new ParameterException('Invalid case.', 'case');
+
+                try {
+                    CaseManager::validateLockedEmailValidationCode($lockedCase, $filtered['code']);
+                } catch (ValidationCodeException $exception) {
+                    return new ParameterException($exception->getMessage(), previous: $exception);
+                }
+
+                CaseManager::closeLockedValidationCode($lockedCase);
+
+                try {
+                    $data = ['email' => $lockedCase['tag']];
+                    return UserManager::updateEntry($user['id'], $data);
+                } catch (DuplicateUniqueColumnException) {
+                    throw new ParameterException('This email address is already used by another user.');
+                }
+            });
+
+            if ($userOrException instanceof \Exception)
+                throw $userOrException;
+            else
+                return $userOrException;
+        } else {
+            if (!$this->isAdministrative())
+                $this->throwPermissionDeniedException();
+
+            if (!isset($filtered['value']))
+                throw new ParameterException('New email address is required.', 'value');
+
+            try {
+                $data = ['email' => $filtered['value']];
+                return UserManager::updateEntry($user['id'], $data);
+            } catch (DuplicateUniqueColumnException) {
+                throw new ParameterException('This email address is already used by another user.', 'value');
+            }
+        }
     }
 }

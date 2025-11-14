@@ -306,6 +306,12 @@ final class Server {
         ));
 
         $this->router->register(new Route(
+            uri: 'users/current/change/email',
+            controller: ["{$prefix}UsersChangeEmail", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
             uri: 'users/current/timeline',
             controller: ["{$prefix}Timeline", 'serve'],
             isDirectory: true
