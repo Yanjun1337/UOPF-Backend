@@ -24,8 +24,27 @@ final class Session extends Endpoint {
     public function read(Response $response): array {
         $payload = [
             'frontend' => SystemMetadataManager::get('frontendAddress'),
-            'backend' => SystemMetadataManager::get('backendAddress')
+            'backend' => SystemMetadataManager::get('backendAddress'),
+            'title' => SystemMetadataManager::get('title'),
+            'socialMedia' => []
         ];
+
+        $socialMedia = [
+            'pacificOfficial',
+            'twitter',
+            'instagram'
+        ];
+
+        foreach ($socialMedia as $name) {
+            $value = SystemMetadataManager::get("social/{$name}");
+
+            if (isset($value)) {
+                $value = trim($value);
+
+                if (strlen($value) > 0)
+                    $payload['socialMedia'][$name] = $value;
+            }
+        }
 
         if (isset($this->request->user))
             $payload['user'] = $this->request->user['id'];

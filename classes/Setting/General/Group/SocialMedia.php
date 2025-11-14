@@ -15,6 +15,7 @@ final class SocialMedia extends Group {
      */
     public function getFields(): array {
         return [
+            'PacificOfficial',
             'Instagram',
             'Twitter'
         ];
