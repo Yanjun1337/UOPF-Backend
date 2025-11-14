@@ -14,6 +14,7 @@ use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\DictionaryValidatorElement;
 use UOPF\Validator\Extension\IdValidator;
+use UOPF\Validator\Extension\UsernameValidator;
 use UOPF\Validator\Extension\UserDomainValidator;
 use UOPF\Validator\Extension\UserPasswordValidator;
 use UOPF\Validator\Extension\ValidationCodeValidator;
@@ -39,6 +40,9 @@ final class UsersMetadata extends Endpoint {
             $this->throwPermissionDeniedException();
 
         switch ($this->query['name']) {
+            case 'username':
+                return $this->setUsername($user);
+
             case 'displayName':
                 return $this->setDisplayName($user);
 
@@ -62,10 +66,27 @@ final class UsersMetadata extends Endpoint {
         }
     }
 
+    protected function setUsername(User $user): User {
+        $filtered = $this->filterBody(new DictionaryValidator([
+            'value' => new DictionaryValidatorElement(
+                label: 'New Username',
+                required: true,
+                validator: new UsernameValidator()
+            )
+        ]));
+
+        try {
+            $data = ['username' => $filtered['value']];
+            return UserManager::updateEntry($user['id'], $data);
+        } catch (DuplicateUniqueColumnException) {
+            throw new ParameterException('This username is already used by another user.');
+        }
+    }
+
     protected function setDisplayName(User $user): User {
         $filtered = $this->filterBody(new DictionaryValidator([
             'value' => new DictionaryValidatorElement(
-                label: 'Display Name',
+                label: 'New Display Name',
                 required: true,
                 validator: new UserDisplayNameValidator()
             )
@@ -82,7 +103,7 @@ final class UsersMetadata extends Endpoint {
     protected function setDescription(User $user): User {
         $filtered = $this->filterBody(new DictionaryValidator([
             'value' => new DictionaryValidatorElement(
-                label: 'Description',
+                label: 'New Description',
                 required: true,
                 validator: new UserDescriptionValidator()
             )

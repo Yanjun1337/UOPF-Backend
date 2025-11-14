@@ -154,6 +154,7 @@ final class Preprocessor {
     protected function preprocessUser(UserModel $user): array {
         $preprocessed = [
             'id' => $user['id'],
+            'username' => $user['username'],
             'displayName' => $this->preprocessEditable('display_name', $user),
 
             'statistics' => [
@@ -180,7 +181,6 @@ final class Preprocessor {
         if ($this->context->canEdit($user)) {
             $private = [
                 'registrationTime' => $user['registered'],
-                'username' => $user['username'],
                 'email' => $user['email'],
                 'canChangeDomain' => !isset($user['domain']),
                 'understood' => [], // @TODO
