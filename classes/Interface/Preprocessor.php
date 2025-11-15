@@ -11,6 +11,7 @@ use UOPF\Model\Topic as TopicModel;
 use UOPF\Model\Record as RecordModel;
 use UOPF\Model\TheCase as CaseModel;
 use UOPF\Model\Relationship as RelationshipModel;
+use UOPF\Facade\Manager\Relationship\User as UserRelationshipManager;
 use UOPF\Interface\EntryWith\RecordWithChildren;
 use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
 use UOPF\Interface\Embeddable\Structure as EmbeddableStructure;
@@ -196,6 +197,17 @@ final class Preprocessor {
             }
 
             $preprocessed['private'] = $private;
+        }
+
+        if ($current = $this->context->request->user) {
+            if (!$user->is($current)) {
+                if ($relationship = UserRelationshipManager::fetch($current['id'], $user['id'])) {
+                    $preprocessed['relationship'] = new EmbeddableStructure(
+                        $relationship['id'],
+                        [Services::getInstance()->userRelationshipManager, 'fetchEntry']
+                    );
+                }
+            }
         }
 
         return $preprocessed;

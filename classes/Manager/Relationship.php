@@ -29,6 +29,10 @@ final class Relationship extends Manager {
         return Model::class;
     }
 
+    public function fetch(int $subject, int $object): ?Model {
+        return $this->fetchDirectly($subject, $object); // @TODO
+    }
+
     public function fetchDirectly(int $subject, int $object, ?DatabaseLockType $lock = null): ?Model {
         return $this->findEntryDirectly([
             'type' => $this->type,
