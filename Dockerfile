@@ -8,7 +8,8 @@ COPY . .
 
 FROM php:8.4-fpm-alpine
 
-RUN mv "${PHP_INI_DIR}/php.ini-production" "${PHP_INI_DIR}/php.ini"
+RUN mv "${PHP_INI_DIR}/php.ini-production" "${PHP_INI_DIR}/php.ini" && \
+    echo 'variables_order = "EGPCS"' >> "${PHP_INI_DIR}/php.ini"
 
 RUN apk add --no-cache pcre-dev $PHPIZE_DEPS && \
     pecl install redis && \
