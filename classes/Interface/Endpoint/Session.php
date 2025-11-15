@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace UOPF\Interface\Endpoint;
 
+use UOPF\Captcha;
 use UOPF\Response;
 use UOPF\Services;
 use UOPF\Model\User;
@@ -26,6 +27,7 @@ final class Session extends Endpoint {
             'frontend' => SystemMetadataManager::get('frontendAddress'),
             'backend' => SystemMetadataManager::get('backendAddress'),
             'title' => SystemMetadataManager::get('title'),
+            'hCaptchaSitekey' => Captcha::getSitekey(),
             'socialMedia' => []
         ];
 

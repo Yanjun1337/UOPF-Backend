@@ -62,7 +62,7 @@ abstract class Captcha {
     /**
      * Returns the sitekey of hCaptcha.
      */
-    protected static function getSitekey(): string {
+    public static function getSitekey(): string {
         if (isset($_ENV['UOPF_HCAPTCHA_SITEKEY']))
             return $_ENV['UOPF_HCAPTCHA_SITEKEY'];
         else
