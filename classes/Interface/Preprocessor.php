@@ -285,8 +285,15 @@ final class Preprocessor {
             'id' => $relationship['id'],
             'created' => $relationship['created'],
 
-            'subject' => $relationship['subject'],
-            'object' => $relationship['object']
+            'subject' => new EmbeddableStructure(
+                $relationship['subject'],
+                [Services::getInstance()->userManager, 'fetchEntry']
+            ),
+
+            'object' => new EmbeddableStructure(
+                $relationship['object'],
+                [Services::getInstance()->userManager, 'fetchEntry']
+            )
         ];
     }
 
