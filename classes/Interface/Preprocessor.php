@@ -201,6 +201,9 @@ final class Preprocessor {
             if ($user->isBlocked())
                 $private['blocked'] = $user->getMetadata('blocked');
 
+            if ($user->isDeactivated())
+                $private['deactivated'] = $user->getMetadata('deactivated');
+
             $preprocessed['private'] = $private;
         }
 

@@ -105,6 +105,10 @@ final class User extends Model {
         return $this->hasPunishment('blocked');
     }
 
+    public function isDeactivated(): bool {
+        return $this->hasPunishment('deactivated');
+    }
+
     protected function hasPunishment(string $type): bool {
         if ($punishment = $this->getMetadata($type))
             return $punishment['closing'] >= time();

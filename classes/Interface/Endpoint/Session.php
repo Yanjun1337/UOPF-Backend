@@ -148,6 +148,9 @@ final class Session extends Endpoint {
         if (!password_verify($filtered['password'], $user->getMetadata('password')))
             throw new ParameterException('Incorrect password.', $identifierKey);
 
+        if ($user->isDeactivated())
+            throw new ParameterException('This account has been deactivated. Please contact the administrator.');
+
         $days = $filtered['remember'] ? 365 : 1;
         static::setTokenOnResponse($response, $user, time() + (60 * 60 * 24 * $days));
 

@@ -149,7 +149,8 @@ final class Services {
 
         if (
             (($token = $request->headers->get('X-API-Token')) !== null) &&
-            ($user = $this->userManager->parseEntryFromToken($token))
+            ($user = $this->userManager->parseEntryFromToken($token)) &&
+            (!$user->isDeactivated())
         )
             $request->setUser($user);
 

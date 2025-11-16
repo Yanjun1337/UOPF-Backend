@@ -74,6 +74,9 @@ final class UsersMetadata extends Endpoint {
             case 'blocked':
                 return $this->setBlocked($user);
 
+            case 'deactivated':
+                return $this->setDeactivated($user);
+
             default:
                 $this->throwNotFoundException();
         }
@@ -91,6 +94,9 @@ final class UsersMetadata extends Endpoint {
         switch ($this->query['name']) {
             case 'blocked':
                 return $this->removeBlocked($user);
+
+            case 'deactivated':
+                return $this->removeDeactivated($user);
 
             default:
                 $this->throwNotFoundException();
@@ -429,6 +435,14 @@ final class UsersMetadata extends Endpoint {
 
     protected function removeBlocked(User $user): User {
         return $this->removePunishment($user, 'blocked');
+    }
+
+    protected function setDeactivated(User $user): User {
+        return $this->imposePunishment($user, 'deactivated');
+    }
+
+    protected function removeDeactivated(User $user): User {
+        return $this->removePunishment($user, 'deactivated');
     }
 
     protected function imposePunishment(User $user, string $type): User {
