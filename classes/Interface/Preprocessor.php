@@ -12,6 +12,8 @@ use UOPF\Model\Record as RecordModel;
 use UOPF\Model\TheCase as CaseModel;
 use UOPF\Model\Relationship as RelationshipModel;
 use UOPF\Facade\Manager\Relationship\User as UserRelationshipManager;
+use UOPF\Facade\Manager\Relationship\Like as LikeRelationshipManager;
+use UOPF\Facade\Manager\Relationship\Dislike as DislikeRelationshipManager;
 use UOPF\Interface\EntryWith\RecordWithChildren;
 use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
 use UOPF\Interface\Embeddable\Structure as EmbeddableStructure;
@@ -353,7 +355,7 @@ final class Preprocessor {
     protected function preprocessPost(RecordModel $record): array {
         $preprocessed = [
             'id' => $record['id'],
-            'type' => $record['type'],
+            // 'type' => $record['type'],
             'status' => $record['status'],
             'created' => $record['created'],
             'modified' => $record['modified'],
@@ -393,6 +395,22 @@ final class Preprocessor {
 
         if (($platform = $record->getPlatform()) !== null)
             $preprocessed['platform'] = $platform;
+
+        if ($current = $this->context->request->user) {
+            if ($like = LikeRelationshipManager::fetch($current['id'], $record['id'])) {
+                $preprocessed['currentUserLike'] = new EmbeddableStructure(
+                    $like['id'],
+                    [Services::getInstance()->likeRelationshipManager, 'fetchEntry']
+                );
+            }
+
+            if ($dislike = DislikeRelationshipManager::fetch($current['id'], $record['id'])) {
+                $preprocessed['currentUserDislike'] = new EmbeddableStructure(
+                    $dislike['id'],
+                    [Services::getInstance()->dislikeRelationshipManager, 'fetchEntry']
+                );
+            }
+        }
 
         $preprocessed['images'] = $this->preprocessRecordImages($record);
         return $preprocessed;
