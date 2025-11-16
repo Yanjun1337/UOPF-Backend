@@ -6,7 +6,9 @@ use UOPF\Captcha;
 use UOPF\Response;
 use UOPF\Services;
 use UOPF\Model\User;
+use UOPF\Facade\Settings as SettingsManager;
 use UOPF\Facade\Manager\User as UserManager;
+use UOPF\Facade\Manager\TheCase as CaseManager;
 use UOPF\Facade\Manager\Metadata\System as SystemMetadataManager;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\DictionaryValidatorElement;
@@ -50,6 +52,15 @@ final class Session extends Endpoint {
 
         if (isset($this->request->user))
             $payload['user'] = $this->request->user['id'];
+
+        if ($this->isAdministrative()) {
+            $payload['requestStatistics'] = [
+                'reports' => CaseManager::countEntries('report', 'review'),
+                'unregistrations' => CaseManager::countEntries('unregistration', 'review')
+            ];
+
+            $payload['settingPages'] = SettingsManager::getMenu();
+        }
 
         return $payload;
     }

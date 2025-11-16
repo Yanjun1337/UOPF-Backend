@@ -53,6 +53,18 @@ final class Settings {
     }
 
     /**
+     * Returns the names of the setting pages along with their menu labels.
+     */
+    public function getMenu(): array {
+        $menu = [];
+
+        foreach ($this->pages as $page)
+            $menu[$page->name] = $page->menuLabel;
+
+        return $menu;
+    }
+
+    /**
      * Returns the instance.
      */
     public static function getInstance(): self {

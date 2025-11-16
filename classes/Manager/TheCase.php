@@ -103,6 +103,14 @@ final class TheCase extends Manager {
         $this->updateLockedEntry($locked, ['status' => 'closed']);
     }
 
+    public function countEntries(string $type, string $status): int {
+        return $this->queryEntries([
+            'AND' => compact('type', 'status'),
+            'LIMIT' => 1,
+            'TOTAL' => true
+        ])->total;
+    }
+
     protected static function generateValidationCode(int $length): string {
         $code = '';
 
