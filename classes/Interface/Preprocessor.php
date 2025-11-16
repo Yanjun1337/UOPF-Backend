@@ -15,6 +15,7 @@ use UOPF\Facade\Manager\Relationship\User as UserRelationshipManager;
 use UOPF\Facade\Manager\Relationship\Like as LikeRelationshipManager;
 use UOPF\Facade\Manager\Relationship\Dislike as DislikeRelationshipManager;
 use UOPF\Interface\EntryWith\RecordWithChildren;
+use UOPF\Interface\EntryWith\UserWithRelationship;
 use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
 use UOPF\Interface\Embeddable\Structure as EmbeddableStructure;
 use UOPF\Interface\Embeddable\RecursiveStructure as EmbeddableRecursiveStructure;
@@ -137,6 +138,9 @@ final class Preprocessor {
             case $data instanceof RecordWithChildren:
                 return $this->preprocessRecordWithChildren($data);
 
+            case $data instanceof UserWithRelationship:
+                return $this->preprocessUserWithRelationship($data);
+
             default:
                 throw new SystemException('Unsupported type of entry with additional fields.');
         }
@@ -150,6 +154,26 @@ final class Preprocessor {
             'list' => new EmbeddableList($children->entries),
             'hasMore' => $children->total > 3
         ];
+
+        return $preprocessed;
+    }
+
+    protected function preprocessUserWithRelationship(UserWithRelationship $data): array {
+        $preprocessed = $this->preprocessUser($data->entry);
+
+        if ($following = UserRelationshipManager::fetch($data->entry['id'], $data->with)) {
+            $preprocessed['following'] = new EmbeddableStructure(
+                $following['id'],
+                [Services::getInstance()->userRelationshipManager, 'fetchEntry']
+            );
+        }
+
+        if ($followed = UserRelationshipManager::fetch($data->with, $data->entry['id'])) {
+            $preprocessed['followedBy'] = new EmbeddableStructure(
+                $followed['id'],
+                [Services::getInstance()->userRelationshipManager, 'fetchEntry']
+            );
+        }
 
         return $preprocessed;
     }

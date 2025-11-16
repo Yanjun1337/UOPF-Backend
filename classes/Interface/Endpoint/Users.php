@@ -10,6 +10,7 @@ use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\TheCase as CaseManager;
 use UOPF\Interface\Endpoint;
 use UOPF\Interface\Exception\ParameterException;
+use UOPF\Interface\EntryWith\UserWithRelationship;
 use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\EnumerationValidator;
@@ -67,7 +68,12 @@ final class Users extends Endpoint {
             'domain' => new DictionaryValidatorElement(
                 label: 'Personal Domain',
                 validator: new UserDomainValidator()
-            )
+            ),
+
+            'relationshipWith' => new DictionaryValidatorElement(
+                label: 'Attaching Relationships with',
+                validator: new IdValidator()
+            ),
         ]));
 
         if ($filtered['orderby'] === 'registered') {
@@ -100,9 +106,18 @@ final class Users extends Endpoint {
         }
 
         $retrieved = UserManager::queryEntries($where);
+        $entries = $retrieved->entries;
+
+        if (isset($filtered['relationshipWith'])) {
+            if (!$this->isAdministrative())
+                $this->throwPermissionDeniedException();
+
+            foreach ($entries as $key => $user)
+                $entries[$key] = new UserWithRelationship($user, $filtered['relationshipWith']);
+        }
 
         static::setPagingOnResponse($response, $retrieved->total, $filtered['perPage']);
-        return new EmbeddableList($retrieved->entries);
+        return new EmbeddableList($entries);
     }
 
     public function write(Response $response): User {
