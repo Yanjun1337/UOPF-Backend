@@ -246,7 +246,7 @@ final class Preprocessor {
             'id' => $case['id'],
             'type' => $case['type'],
             'status' => $case['status'],
-            'time' => $case['modified']
+            'modified' => $case['modified']
         ];
 
         if (isset($case['user'])) {
