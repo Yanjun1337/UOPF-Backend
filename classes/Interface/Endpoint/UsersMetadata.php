@@ -13,6 +13,7 @@ use UOPF\Facade\Manager\TheCase as CaseManager;
 use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
 use UOPF\Validator\StringValidator;
 use UOPF\Validator\DictionaryValidator;
+use UOPF\Validator\EnumerationValidator;
 use UOPF\Validator\DictionaryValidatorElement;
 use UOPF\Validator\Extension\IdValidator;
 use UOPF\Validator\Extension\UsernameValidator;
@@ -64,6 +65,9 @@ final class UsersMetadata extends Endpoint {
 
             case 'email':
                 return $this->setEmail($user);
+
+            case 'understood':
+                return $this->setUnderstood($user);
 
             default:
                 $this->throwNotFoundException();
@@ -357,5 +361,42 @@ final class UsersMetadata extends Endpoint {
                 throw new ParameterException('This email address is already used by another user.', 'value');
             }
         }
+    }
+
+    protected function setUnderstood(User $user): User {
+        $filtered = $this->filterBody(new DictionaryValidator([
+            'value' => new DictionaryValidatorElement(
+                label: 'User Guidance',
+                required: true,
+
+                validator: new EnumerationValidator([
+                    'editor',
+                    'home',
+                    'center',
+                    'centerSecond',
+                    'announcement'
+                ])
+            )
+        ]));
+
+        return Database::transaction(function () use (&$user, &$filtered) {
+            if (!$lockedUser = UserManager::fetchEntryDirectly($user['id'], lock: DatabaseLockType::read))
+                $this->throwInconsistentInternalDataException();
+
+            if ($lockedMetadata = UserMetadataManager::fetchDirectly('understood', $user['id'], DatabaseLockType::write)) {
+                $understood = $lockedMetadata->getDecodedValue();
+                $understood = is_array($understood) ? $understood : [];
+
+                if (in_array($filtered['value'], $understood, true))
+                    throw new ParameterException('This user guidance is already completed.', 'value');
+
+                $understood[] = $filtered['value'];
+                UserMetadataManager::setLocked($lockedMetadata, $understood);
+            } else {
+                UserMetadataManager::add('understood', [$filtered['value']], $user['id']);
+            }
+
+            return $lockedUser;
+        });
     }
 }

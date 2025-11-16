@@ -97,6 +97,10 @@ final class User extends Model {
         return $image->getSource();
     }
 
+    public function getCompletedUserGuidances(): array {
+        return $this->getMetadata('understood') ?? [];
+    }
+
     public function refreshLastLogin(?string $address): void {
         $lastLogin = [
             'time' => time()

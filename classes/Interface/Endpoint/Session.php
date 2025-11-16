@@ -19,6 +19,7 @@ use UOPF\Validator\Extension\UserPasswordValidator;
 use UOPF\Validator\Extension\CaptchaTokenValidator;
 use UOPF\Interface\Endpoint;
 use UOPF\Interface\Exception\ParameterException;
+use UOPF\Interface\Embeddable\Structure as EmbeddableStructure;
 
 /**
  * Session
@@ -50,8 +51,12 @@ final class Session extends Endpoint {
             }
         }
 
-        if (isset($this->request->user))
-            $payload['user'] = $this->request->user['id'];
+        if (isset($this->request->user)) {
+            $payload['user'] = new EmbeddableStructure(
+                $this->request->user['id'],
+                [Services::getInstance()->userManager, 'fetchEntry']
+            );
+        }
 
         if ($this->isAdministrative()) {
             $payload['requestStatistics'] = [

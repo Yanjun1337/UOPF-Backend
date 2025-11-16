@@ -186,7 +186,7 @@ final class Preprocessor {
                 'registrationTime' => $user['registered'],
                 'email' => $user['email'],
                 'canChangeDomain' => !isset($user['domain']),
-                'understood' => [], // @TODO
+                'understood' => $user->getCompletedUserGuidances(),
                 'unreadNotifications' => intval($user->getMetadata('unreadNotifications'))
             ];
 
