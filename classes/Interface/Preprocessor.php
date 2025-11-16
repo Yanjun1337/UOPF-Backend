@@ -321,7 +321,7 @@ final class Preprocessor {
             if ($record['status'] === 'trashed') {
                 return [
                     'id' => $record['id'],
-                    'type' => $record['type'],
+                    // 'type' => $record['type'],
                     'status' => $record['status']
                 ];
             }
@@ -329,7 +329,7 @@ final class Preprocessor {
             if ($record['status'] == 'blocked') {
                 return [
                     'id' => $record['id'],
-                    'type' => $record['type'],
+                    // 'type' => $record['type'],
                     'status' => $record['status'],
 
                     'user' => new EmbeddableStructure(
@@ -453,6 +453,22 @@ final class Preprocessor {
 
         if (($platform = $record->getPlatform()) !== null)
             $preprocessed['platform'] = $platform;
+
+        if ($current = $this->context->request->user) {
+            if ($like = LikeRelationshipManager::fetch($current['id'], $record['id'])) {
+                $preprocessed['currentUserLike'] = new EmbeddableStructure(
+                    $like['id'],
+                    [Services::getInstance()->likeRelationshipManager, 'fetchEntry']
+                );
+            }
+
+            if ($dislike = DislikeRelationshipManager::fetch($current['id'], $record['id'])) {
+                $preprocessed['currentUserDislike'] = new EmbeddableStructure(
+                    $dislike['id'],
+                    [Services::getInstance()->dislikeRelationshipManager, 'fetchEntry']
+                );
+            }
+        }
 
         $preprocessed['images'] = $this->preprocessRecordImages($record);
         return $preprocessed;
