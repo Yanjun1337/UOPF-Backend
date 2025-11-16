@@ -94,8 +94,8 @@ final class Record extends Manager {
                 $sanitizedContent = static::sanitizeLongPostContent($content, $lockedImages);
                 $topics = TopicManager::extractFromHTML($sanitizedContent);
             } else {
-                if (mb_strlen($content) > 300)
-                    throw new RecordUpdateException('Content cannot exceed 300 characters.');
+                if (mb_strlen($content) > 500)
+                    throw new RecordUpdateException('Content cannot exceed 500 characters.');
 
                 $sanitizedContent = $content;
                 $topics = TopicManager::extractFromText($sanitizedContent);
@@ -280,8 +280,8 @@ final class Record extends Manager {
                     'new' => TopicManager::extractFromHTML($sanitizedContent)
                 ];
             } else {
-                if (mb_strlen($content) > 300)
-                    throw new RecordUpdateException('Content cannot exceed 300 characters.');
+                if (mb_strlen($content) > 500)
+                    throw new RecordUpdateException('Content cannot exceed 500 characters.');
 
                 $data['content'] = $content;
 

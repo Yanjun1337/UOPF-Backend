@@ -59,7 +59,7 @@ final class Record extends Model {
 
         if ($current = $this->getParent()) {
             while (
-                (mb_strlen($rendered) < (300 * 2)) &&
+                (mb_strlen($rendered) < (500 * 2)) &&
                 ($parent = $current->getParent())
             ) {
                 if (!$user = UserManager::fetchEntry($current['user']))
