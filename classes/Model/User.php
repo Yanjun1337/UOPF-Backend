@@ -98,7 +98,22 @@ final class User extends Model {
     }
 
     public function getCompletedUserGuidances(): array {
-        return $this->getMetadata('understood') ?? [];
+        $completed = $this->getMetadata('understood') ?? [];
+
+        if (!$this->shouldShowAnnouncement())
+            $completed[] = 'announcement';
+
+        return $completed;
+    }
+
+    public function shouldShowAnnouncement(): bool {
+        if (!$understood = $this->getMetadata('announcementUnderstood'))
+            return true;
+
+        if (!$refreshed = SystemMetadataManager::get('announcement/refreshed'))
+            return false;
+
+        return $refreshed >= $understood;
     }
 
     public function isBlocked(): bool {

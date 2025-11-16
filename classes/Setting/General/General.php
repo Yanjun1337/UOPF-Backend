@@ -32,6 +32,7 @@ final class General extends Page {
         return [
             'Title',
             'Addresses',
+            'Announcement',
             'SocialMedia'
         ];
     }

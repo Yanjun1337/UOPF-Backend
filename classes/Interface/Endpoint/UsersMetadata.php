@@ -412,17 +412,21 @@ final class UsersMetadata extends Endpoint {
             if (!$lockedUser = UserManager::fetchEntryDirectly($user['id'], lock: DatabaseLockType::read))
                 $this->throwInconsistentInternalDataException();
 
-            if ($lockedMetadata = UserMetadataManager::fetchDirectly('understood', $user['id'], DatabaseLockType::write)) {
-                $understood = $lockedMetadata->getDecodedValue();
-                $understood = is_array($understood) ? $understood : [];
-
-                if (in_array($filtered['value'], $understood, true))
-                    throw new ParameterException('This user guidance is already completed.', 'value');
-
-                $understood[] = $filtered['value'];
-                UserMetadataManager::setLocked($lockedMetadata, $understood);
+            if ($filtered['value'] === 'announcement') {
+                $lockedUser->setMetadata('announcementUnderstood', time());
             } else {
-                UserMetadataManager::add('understood', [$filtered['value']], $user['id']);
+                if ($lockedMetadata = UserMetadataManager::fetchDirectly('understood', $user['id'], DatabaseLockType::write)) {
+                    $understood = $lockedMetadata->getDecodedValue();
+                    $understood = is_array($understood) ? $understood : [];
+
+                    if (in_array($filtered['value'], $understood, true))
+                        throw new ParameterException('This user guidance is already completed.', 'value');
+
+                    $understood[] = $filtered['value'];
+                    UserMetadataManager::setLocked($lockedMetadata, $understood);
+                } else {
+                    UserMetadataManager::add('understood', [$filtered['value']], $user['id']);
+                }
             }
 
             return $lockedUser;

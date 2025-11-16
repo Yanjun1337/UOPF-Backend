@@ -5,6 +5,7 @@ namespace UOPF\Interface\Endpoint;
 use UOPF\Captcha;
 use UOPF\Response;
 use UOPF\Services;
+use UOPF\Utilities;
 use UOPF\Model\User;
 use UOPF\Facade\Settings as SettingsManager;
 use UOPF\Facade\Manager\User as UserManager;
@@ -66,6 +67,9 @@ final class Session extends Endpoint {
 
             $payload['settingPages'] = SettingsManager::getMenu();
         }
+
+        $announcement = SystemMetadataManager::get('announcement/content') ?? '';
+        $payload['announcement'] = Utilities::renderMarkdown($announcement);
 
         return $payload;
     }
