@@ -33,7 +33,7 @@ final class Image extends Model {
     }
 
     public static function getImagesDirectorySource(): string {
-        $source = SystemMetadataManager::get('frontendAddress');
+        $source = SystemMetadataManager::get('backendAddress');
 
         if (is_dir(ROOT . 'variable/images/'))
             $source .= 'variable/images/';
