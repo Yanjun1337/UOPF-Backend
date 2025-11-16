@@ -12,10 +12,12 @@ use UOPF\Facade\Manager\Image as ImageManager;
 use UOPF\Facade\Manager\TheCase as CaseManager;
 use UOPF\Facade\Manager\Metadata\User as UserMetadataManager;
 use UOPF\Validator\StringValidator;
+use UOPF\Validator\IntegerValidator;
 use UOPF\Validator\DictionaryValidator;
 use UOPF\Validator\EnumerationValidator;
 use UOPF\Validator\DictionaryValidatorElement;
 use UOPF\Validator\Extension\IdValidator;
+use UOPF\Validator\Extension\ReasonValidator;
 use UOPF\Validator\Extension\UsernameValidator;
 use UOPF\Validator\Extension\UserDomainValidator;
 use UOPF\Validator\Extension\UserPasswordValidator;
@@ -68,6 +70,27 @@ final class UsersMetadata extends Endpoint {
 
             case 'understood':
                 return $this->setUnderstood($user);
+
+            case 'blocked':
+                return $this->setBlocked($user);
+
+            default:
+                $this->throwNotFoundException();
+        }
+    }
+
+    public function delete(Response $response): User {
+        $id = $this->filterUserParameterInQuery($this->query['id']);
+
+        if (!$user = UserManager::fetchEntry($id))
+            $this->throwNotFoundException();
+
+        if (!$this->canEdit($user))
+            $this->throwPermissionDeniedException();
+
+        switch ($this->query['name']) {
+            case 'blocked':
+                return $this->removeBlocked($user);
 
             default:
                 $this->throwNotFoundException();
@@ -395,6 +418,59 @@ final class UsersMetadata extends Endpoint {
             } else {
                 UserMetadataManager::add('understood', [$filtered['value']], $user['id']);
             }
+
+            return $lockedUser;
+        });
+    }
+
+    protected function setBlocked(User $user): User {
+        return $this->imposePunishment($user, 'blocked');
+    }
+
+    protected function removeBlocked(User $user): User {
+        return $this->removePunishment($user, 'blocked');
+    }
+
+    protected function imposePunishment(User $user, string $type): User {
+        if (!$this->isAdministrative())
+            $this->throwPermissionDeniedException();
+
+        $filtered = $this->filterBody(new DictionaryValidator([
+            'cause' => new DictionaryValidatorElement(
+                label: 'Reason',
+                required: true,
+                validator: new ReasonValidator()
+            ),
+
+            'closing' => new DictionaryValidatorElement(
+                label: 'End Time',
+                required: true,
+                validator: new IntegerValidator()
+            )
+        ]));
+
+        return Database::transaction(function () use (&$user, &$type, &$filtered) {
+            if (!$locked = UserManager::fetchEntryDirectly($user['id'], lock: DatabaseLockType::read))
+                $this->throwInconsistentInternalDataException();
+
+            if ($type === 'deactivated' && $locked->isAdministrator())
+                throw new ParameterException('The administrator cannot be deactivated.');
+
+            $locked->setMetadata($type, $filtered);
+            return $locked;
+        });
+    }
+
+    protected function removePunishment(User $user, string $type): User {
+        if (!$this->isAdministrative())
+            $this->throwPermissionDeniedException();
+
+        return Database::transaction(function () use (&$user, &$type) {
+            if (!$lockedUser = UserManager::fetchEntryDirectly($user['id'], lock: DatabaseLockType::read))
+                $this->throwInconsistentInternalDataException();
+
+            if ($lockedMetadata = UserMetadataManager::fetchDirectly($type, $lockedUser['id'], DatabaseLockType::write))
+                UserMetadataManager::deleteLockedEntry($lockedMetadata);
 
             return $lockedUser;
         });

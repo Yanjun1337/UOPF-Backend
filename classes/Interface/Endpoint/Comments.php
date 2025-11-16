@@ -177,6 +177,9 @@ final class Comments extends Endpoint {
         if (!$current = $this->request->user)
             $this->throwUnauthorizedException();
 
+        if ($current->isBlocked())
+            $this->throwBlockedUserException();
+
         $filtered = $this->filterBody(new DictionaryValidator([
             'post' => new DictionaryValidatorElement(
                 label: 'Post ID',

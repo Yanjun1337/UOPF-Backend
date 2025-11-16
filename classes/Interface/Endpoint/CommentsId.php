@@ -35,6 +35,12 @@ final class CommentsId extends Endpoint {
     }
 
     public function write(Response $response): Record {
+        if (!$current = $this->request->user)
+            $this->throwUnauthorizedException();
+
+        if ($current->isBlocked())
+            $this->throwBlockedUserException();
+
         $id = $this->filterUserParameterInQuery($this->query['id']);
 
         $filtered = $this->filterBody(new DictionaryValidator([

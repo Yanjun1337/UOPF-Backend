@@ -178,6 +178,9 @@ final class Posts extends Endpoint {
         if (!$current = $this->request->user)
             $this->throwUnauthorizedException();
 
+        if ($current->isBlocked())
+            $this->throwBlockedUserException();
+
         $filtered = $this->filterBody(new DictionaryValidator([
             'title' => new DictionaryValidatorElement(
                 label: 'Post Title',

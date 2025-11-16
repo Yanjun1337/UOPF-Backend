@@ -239,6 +239,13 @@ abstract class Endpoint {
     }
 
     /**
+     * Throws an "Blocked user" exception.
+     */
+    protected function throwBlockedUserException(): never {
+        throw new Exception('User is blocked.', 403);
+    }
+
+    /**
      * Returns the allowed HTTP methods for the endpoint.
      */
     protected function getAllowedMethods(): array {

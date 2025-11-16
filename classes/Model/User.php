@@ -101,6 +101,17 @@ final class User extends Model {
         return $this->getMetadata('understood') ?? [];
     }
 
+    public function isBlocked(): bool {
+        return $this->hasPunishment('blocked');
+    }
+
+    protected function hasPunishment(string $type): bool {
+        if ($punishment = $this->getMetadata($type))
+            return $punishment['closing'] >= time();
+        else
+            return false;
+    }
+
     public function refreshLastLogin(?string $address): void {
         $lastLogin = [
             'time' => time()
