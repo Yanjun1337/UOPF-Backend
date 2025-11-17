@@ -14,6 +14,14 @@ use UOPF\Exception\RelationshipNonexistenceException;
  * Relationship Manager
  */
 final class Relationship extends Manager {
+    protected array $indexes = [
+        'entry' => [
+            'type',
+            'subject',
+            'object'
+        ]
+    ];
+
     public function __construct(
         /**
          * The type of these relationships.
@@ -29,8 +37,38 @@ final class Relationship extends Manager {
         return Model::class;
     }
 
+    public function insertEntry(array $data): int {
+        $this->removeEntryNonexistenceFromCache([
+            'type' => $this->type,
+            'subject' => $data['subject'] ?? null,
+            'object' => $data['object'] ?? null
+        ]);
+
+        return parent::insertEntry($data);
+    }
+
     public function fetch(int $subject, int $object): ?Model {
-        return $this->fetchDirectly($subject, $object); // @TODO
+        $conditions = [
+            'type' => $this->type,
+            'subject' => $subject,
+            'object' => $object
+        ];
+
+        if ($cached = $this->findEntryFromCache($conditions))
+            return $cached;
+
+        if ($this->hasEntryNonexistenceCache($conditions))
+            return null;
+
+        return Database::transaction(function () use (&$conditions) {
+            if ($entry = $this->findEntryDirectly($conditions, DatabaseLockType::read)) {
+                $this->cacheEntry($entry);
+                return $entry;
+            } else {
+                $this->cacheEntryNonexistence($conditions);
+                return null;
+            }
+        });
     }
 
     public function fetchDirectly(int $subject, int $object, ?DatabaseLockType $lock = null): ?Model {

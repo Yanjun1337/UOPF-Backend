@@ -13,6 +13,13 @@ use UOPF\Exception\ValidationCodeException;
  * Case Manager
  */
 final class TheCase extends Manager {
+    protected array $indexes = [
+        'entry' => [
+            'type',
+            'tag'
+        ]
+    ];
+
     public function getTableName(): string {
         return 'cases';
     }

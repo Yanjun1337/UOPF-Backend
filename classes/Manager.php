@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace UOPF;
 
 use PDOException;
+use UOPF\Facade\Cache;
 use UOPF\Facade\Database;
 use UOPF\Exception\DatabaseException;
 
@@ -10,6 +11,20 @@ use UOPF\Exception\DatabaseException;
  * Data Table Manager
  */
 abstract class Manager {
+    /**
+     * The list of indexes created for accessing the entries cache.
+     */
+    protected array $indexes = [];
+
+    /**
+     * The namespace under which entries cache is stored.
+     */
+    protected string $cacheNamespace {
+        get {
+            return $this->getTableName() . '/';
+        }
+    }
+
     /**
      * Returns the name of the table used in the database.
      */
@@ -98,6 +113,8 @@ abstract class Manager {
 
         if ($statement->rowCount() !== 1)
             throw new Exception('Failed to delete entry.');
+
+        $this->removeEntryFromCache($locked);
     }
 
     /**
@@ -122,6 +139,23 @@ abstract class Manager {
     }
 
     /**
+     * Finds an entry that matches specific conditions.
+     */
+    public function findEntry(array $conditions): ?Model {
+        if ($cached = $this->findEntryFromCache($conditions))
+            return $cached;
+
+        return Database::transaction(function () use (&$conditions) {
+            if ($entry = $this->findEntryDirectly($conditions, DatabaseLockType::read)) {
+                $this->cacheEntry($entry);
+                return $entry;
+            } else {
+                return null;
+            }
+        });
+    }
+
+    /**
      * Fetches an entry directly from the database using a specific field.
      */
     public function fetchEntryDirectly(string|int|float|bool $value, string $field = 'id', ?DatabaseLockType $lock = null): ?Model {
@@ -132,7 +166,7 @@ abstract class Manager {
      * Fetches an entry using a specific field.
      */
     public function fetchEntry(string|int|float|bool $value, string $field = 'id'): ?Model {
-        return $this->fetchEntryDirectly($value, $field); // @TODO
+        return $this->findEntry([$field => $value]);
     }
 
     /**
@@ -170,5 +204,137 @@ abstract class Manager {
      */
     public function incrementLockedEntryField(Model $locked, string $field, int $step = 1): void {
         $this->updateLockedEntry($locked, [$field => $locked[$field] + $step]);
+    }
+
+    /**
+     * Finds an entry from the cache engine that matches specific conditions.
+     */
+    protected function findEntryFromCache(array $conditions): ?Model {
+        if (isset($conditions['id']) && count($conditions) === 1)
+            return Cache::get($this->cacheNamespace . $conditions['id']);
+
+        if ($identifier = $this->findEntryIdentifierByIndexes($conditions))
+            return Cache::get($this->cacheNamespace . $identifier);
+
+        return null;
+    }
+
+    /**
+     * Stores an entry in the cache engine.
+     */
+    protected function cacheEntry(Model $entry): void {
+        foreach ($this->indexes as $name => $fields)
+            $this->setEntryCacheIndex($entry, $name, $fields);
+
+        Cache::set($this->cacheNamespace . $entry['id'], $entry);
+    }
+
+    /**
+     * Removes the cache of an entry from the cache engine.
+     */
+    protected function removeEntryFromCache(Model $entry): void {
+        foreach ($this->indexes as $name => $fields)
+            $this->removeEntryCacheIndex($entry, $name, $fields);
+
+        Cache::remove($this->cacheNamespace . $entry['id'], $entry);
+    }
+
+    /**
+     * Finds the identifier of an entry from the cache engine that matches specific conditions.
+     */
+    protected function findEntryIdentifierByIndexes(array $conditions): ?int {
+        ksort($conditions);
+        $keys = array_keys($conditions);
+
+        foreach ($this->indexes as $key => $fields) {
+            sort($fields);
+
+            if ($fields === $keys) {
+                $name = $key;
+                break;
+            }
+        }
+
+        if (!isset($name))
+            return null;
+
+        $namespace = "{$this->cacheNamespace}{$name}/";
+        return Cache::get($namespace . implode('/', $conditions));
+    }
+
+    /**
+     * Sets an index for an entry in the cache engine.
+     */
+    protected function setEntryCacheIndex(Model $entry, string $name, array $fields): void {
+        asort($fields);
+        $values = [];
+
+        foreach ($fields as $field) {
+            if (isset($entry[$field])) {
+                if (!is_scalar($entry[$field]))
+                    throw new Exception('Only scalar fields can be used in a cache index.');
+
+                $values[] = $entry[$field];
+            } else {
+                $values[] = '';
+            }
+        }
+
+        if (empty($values))
+            return;
+
+        $namespace = "{$this->cacheNamespace}{$name}/";
+        Cache::set($namespace . implode('/', $values), $entry['id']);
+    }
+
+    /**
+     * Removes an index for an entry from the cache engine.
+     */
+    protected function removeEntryCacheIndex(Model $entry, string $name, array $fields): void {
+        asort($fields);
+        $values = [];
+
+        foreach ($fields as $field) {
+            if (isset($entry[$field])) {
+                if (!is_scalar($entry[$field]))
+                    return;
+
+                $values[] = $entry[$field];
+            } else {
+                $values[] = '';
+            }
+        }
+
+        $namespace = "{$this->cacheNamespace}{$name}/";
+        Cache::remove($namespace . implode('/', $values));
+    }
+
+    /**
+     * Check whether the nonexistence mark of an entry exists in the cache engine.
+     */
+    protected function hasEntryNonexistenceCache(array $conditions): bool {
+        return boolval(Cache::get($this->getEntryNonexistenceCacheKey($conditions)));
+    }
+
+    /**
+     * Sets the nonexistence mark of an entry in the cache engine.
+     */
+    protected function cacheEntryNonexistence(array $conditions): void {
+        Cache::set($this->getEntryNonexistenceCacheKey($conditions), true);
+    }
+
+    /**
+     * Removes the nonexistence mark of an entry form the cache engine.
+     */
+    protected function removeEntryNonexistenceFromCache(array $conditions): void {
+        Cache::remove($this->getEntryNonexistenceCacheKey($conditions));
+    }
+
+    /**
+     * Returns the key of the nonexistence mark of an entry in the cache engine.
+     */
+    protected function getEntryNonexistenceCacheKey(array $conditions): string {
+        ksort($conditions);
+        return $this->cacheNamespace . 'nonexistence/' . implode('/', $conditions);
     }
 }

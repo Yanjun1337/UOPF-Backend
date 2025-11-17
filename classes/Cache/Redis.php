@@ -39,6 +39,10 @@ final class Redis extends Cache {
         // 5. Select the specified database.
         if ($database !== null && !$this->redis->select($database))
             throw new Exception('Failed to select the specified database.');
+
+        // 6. Set serialization options.
+        if (!$this->redis->setOption(PHPRedis::OPT_SERIALIZER, PHPRedis::SERIALIZER_PHP))
+            throw new Exception('Failed to set serialization options for Redis.');
     }
 
     public function get(string $key): mixed {

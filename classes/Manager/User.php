@@ -20,6 +20,16 @@ use const PASSWORD_ARGON2ID;
  * User Manager
  */
 final class User extends Manager {
+    protected array $indexes = [
+        'email' => [
+            'email'
+        ],
+
+        'username' => [
+            'username'
+        ]
+    ];
+
     public function getTableName(): string {
         return 'users';
     }

@@ -13,6 +13,12 @@ use UOPF\Facade\Database;
  * Topic Manager
  */
 final class Topic extends Manager {
+    protected array $indexes = [
+        'label' => [
+            'label'
+        ]
+    ];
+
     public function getTableName(): string {
         return 'topics';
     }

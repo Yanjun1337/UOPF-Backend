@@ -12,6 +12,14 @@ use UOPF\Facade\Database;
  * Metadata Manager
  */
 final class Metadata extends Manager {
+    protected array $indexes = [
+        'entry' => [
+            'group',
+            'affiliated_to',
+            'name'
+        ]
+    ];
+
     public function __construct(
         /**
          * The group to which these metadata are affiliated.
@@ -27,14 +35,34 @@ final class Metadata extends Manager {
         return Model::class;
     }
 
+    public function insertEntry(array $data): int {
+        $this->removeEntryNonexistenceFromCache([
+            'group' => $this->group,
+            'affiliated_to' => $data['affiliated_to'] ?? null,
+            'name' => $data['name'] ?? null
+        ]);
+
+        return parent::insertEntry($data);
+    }
+
     public function get(string $name, ?int $affiliatedTo = null): mixed {
         $conditions = $this->getFindingConditions($name, $affiliatedTo);
-        $entry = $this->findEntryDirectly($conditions);
 
-        if ($entry)
-            return $entry->getDecodedValue();
-        else
+        if ($cached = $this->findEntryFromCache($conditions))
+            return $cached->getDecodedValue();
+
+        if ($this->hasEntryNonexistenceCache($conditions))
             return null;
+
+        return Database::transaction(function () use (&$conditions) {
+            if ($entry = $this->findEntryDirectly($conditions, DatabaseLockType::read)) {
+                $this->cacheEntry($entry);
+                return $entry->getDecodedValue();
+            } else {
+                $this->cacheEntryNonexistence($conditions);
+                return null;
+            }
+        });
     }
 
     public function add(string $name, mixed $value, ?int $affiliatedTo = null): void {
