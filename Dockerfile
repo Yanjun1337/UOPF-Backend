@@ -6,24 +6,26 @@ COPY composer.json composer.lock .
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 COPY . .
 
-FROM php:8.4-fpm-alpine
+FROM php:8.4-fpm
 
 RUN mv "${PHP_INI_DIR}/php.ini-production" "${PHP_INI_DIR}/php.ini" && \
     echo 'variables_order = "EGPCS"' >> "${PHP_INI_DIR}/php.ini"
 
-RUN apk update && \
-    apk add --no-cache mariadb-client mariadb-dev && \
-    rm -rf /var/cache/apk/* && \
-    docker-php-ext-install pdo pdo_mysql
+RUN apt-get update && \
+    apt-get install -y mariadb-client && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/* && \
+    docker-php-ext-install mysqli pdo pdo_mysql
 
-RUN apk add --no-cache pcre-dev $PHPIZE_DEPS && \
-    pecl install redis && \
-    docker-php-ext-enable redis.so
+RUN pecl install redis && \
+    docker-php-ext-enable redis
 
-RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS imagemagick-dev \
-    && pecl install imagick \
-    && docker-php-ext-enable imagick \
-    && apk del .build-deps
+RUN apt-get update && \
+    apt-get install -y libmagickwand-dev && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/* && \
+    pecl install imagick && \
+    docker-php-ext-enable imagick
 
 COPY --from=builder --chown=www-data:www-data /usr/src/uopf /usr/src/uopf
 
