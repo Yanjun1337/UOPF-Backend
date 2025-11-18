@@ -30,7 +30,8 @@ final class UsersAuthentication extends Endpoint {
 
                 validator: new EnumerationValidator([
                     'password',
-                    'email'
+                    'email',
+                    'unregistration'
                 ])
             )
         ]));

@@ -34,7 +34,8 @@ final class Mail extends Page {
             'PasswordReset',
             'AuthenticationPassword',
             'AuthenticationEmail',
-            'UpdateEmail'
+            'UpdateEmail',
+            'AuthenticationUnregistration'
         ];
     }
 }

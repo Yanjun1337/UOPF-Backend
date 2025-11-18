@@ -170,6 +170,33 @@ final class Users extends Endpoint {
         return $user;
     }
 
+    public function delete(Response $response): User {
+        if (!$current = $this->request->user)
+            $this->throwUnauthorizedException();
+
+        if (!$this->isAdministrative())
+            $this->throwPermissionDeniedException();
+
+        $filtered = $this->filterBody(new DictionaryValidator([
+            'id' => new DictionaryValidatorElement(
+                label: 'User ID',
+                required: true,
+                validator: new IdValidator()
+            )
+        ]));
+
+        return Database::transaction(function () use (&$current, &$filtered) {
+            if (!$locked = UserManager::fetchEntryDirectly($filtered['id'], lock: DatabaseLockType::write))
+                $this->throwNotFoundException();
+
+            if ($current->is($locked))
+                throw new ParameterException('The current account cannot be unregistered.', 'id');
+
+            UserManager::unregisterLocked($locked);
+            return $locked;
+        });
+    }
+
     protected static function generateRandomDisplayName(): string {
         $random = new Random();
         return $random->get();

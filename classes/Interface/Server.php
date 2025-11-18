@@ -317,6 +317,24 @@ final class Server {
             isDirectory: true
         ));
 
+        $this->router->register(new Route(
+            uri: 'users/current/unregister',
+            controller: ["{$prefix}UserUnregister", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: 'cases/unregisters',
+            controller: ["{$prefix}CasesUnregisters", 'serve'],
+            isDirectory: true
+        ));
+
+        $this->router->register(new Route(
+            uri: "cases/unregisters/{$id}",
+            controller: ["{$prefix}CasesUnregistersId", 'serve'],
+            isDirectory: true
+        ));
+
         return $this->router;
     }
 
