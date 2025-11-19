@@ -43,7 +43,11 @@ abstract class Endpoint {
      */
     public function generateContent(Response $response): mixed {
         $methods = $this->getMethods();
-        $method = $this->request->getMethod();
+
+        if (($overwrite = $this->request->headers->get('X-API-Method')) === null)
+            $method = $this->request->getMethod();
+        else
+            $method = strtoupper($overwrite);
 
         if (!isset($methods[$method]))
             $this->throwMethodNotSupportedException($response);

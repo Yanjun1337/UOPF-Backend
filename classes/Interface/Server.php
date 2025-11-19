@@ -51,7 +51,8 @@ final class Server {
                 'Authorization',
                 'Content-Type',
                 'X-API-Embed',
-                'X-API-Token'
+                'X-API-Token',
+                'X-API-Method'
             ])
         ];
 
