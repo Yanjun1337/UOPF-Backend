@@ -23,7 +23,7 @@ final class PostsUpload extends Endpoint {
         );
 
         try {
-            $id = ImageManager::uploadFromBody($this->request, $parameters);
+            $id = ImageManager::uploadFromRequest($this->request, $parameters);
         } catch (ImageUploadException $exception) {
             throw new ParameterException($exception->getMessage(), previous: $exception);
         }

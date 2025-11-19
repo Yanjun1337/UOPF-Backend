@@ -187,7 +187,7 @@ final class UsersMetadata extends Endpoint {
         );
 
         try {
-            $uploaded = ImageManager::uploadFromBody($this->request, $parameters);
+            $uploaded = ImageManager::uploadFromRequest($this->request, $parameters);
         } catch (ImageUploadException $exception) {
             throw new ParameterException($exception->getMessage(), previous: $exception);
         }
@@ -225,7 +225,7 @@ final class UsersMetadata extends Endpoint {
         );
 
         try {
-            $uploaded = ImageManager::uploadFromBody($this->request, $parameters);
+            $uploaded = ImageManager::uploadFromRequest($this->request, $parameters);
         } catch (ImageUploadException $exception) {
             throw new ParameterException($exception->getMessage(), previous: $exception);
         }

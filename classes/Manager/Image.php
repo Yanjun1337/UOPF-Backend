@@ -26,6 +26,20 @@ final class Image extends Manager {
         return Model::class;
     }
 
+    public function uploadFromRequest(Request $request, ?ImageUploadParameters $parameters = null): int {
+        $contentType = $request->headers->get('Content-Type');
+
+        if (isset($contentType) && str_starts_with($contentType, 'image/'))
+            return $this->uploadFromBody($request, $parameters);
+
+        $files = $request->files->all();
+
+        if (isset($files['file']))
+            return $this->uploadFromFile($request, $parameters);
+
+        throw new ImageUploadException('No image source.');
+    }
+
     public function uploadFromBody(Request $request, ?ImageUploadParameters $parameters = null): int {
         $temporary = static::createTemporaryFile();
 
@@ -37,6 +51,18 @@ final class Image extends Manager {
         } finally {
             unlink($temporary);
         }
+    }
+
+    public function uploadFromFile(Request $request, ?ImageUploadParameters $parameters = null): int {
+        $files = $request->files->all();
+
+        if (!isset($files['file']))
+            throw new ImageUploadException('No file.');
+
+        if (!$files['file']->isValid())
+            throw new ImageUploadException('Invalid file.');
+
+        return $this->upload($files['file']->getPathname(), $parameters);
     }
 
     public function upload(string $path, ?ImageUploadParameters $parameters = null): int {
