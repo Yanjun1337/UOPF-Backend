@@ -15,7 +15,7 @@ final class Twitter extends MetadataField {
     /**
      * The label of the setting field.
      */
-    protected(set) string $label = 'Twitter';
+    protected(set) string $label = 'Twitter/X';
 
     /**
      * The type of the setting field.
