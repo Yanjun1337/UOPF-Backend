@@ -99,6 +99,8 @@ abstract class Manager {
         } catch (PDOException $exception) {
             throw DatabaseException::createFromPDOException($exception);
         }
+
+        $this->removeEntryFromCache($locked);
     }
 
     /**
