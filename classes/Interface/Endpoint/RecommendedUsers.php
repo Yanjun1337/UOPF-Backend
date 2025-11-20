@@ -9,12 +9,13 @@ use UOPF\Facade\Database;
 use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\Relationship\User as UserRelationshipManager;
 use UOPF\Interface\Endpoint;
+use UOPF\Interface\Embeddable\FlatList as EmbeddableList;
 
 /**
  * Recommended Users
  */
 final class RecommendedUsers extends Endpoint {
-    public function read(Response $response): array {
+    public function read(Response $response): EmbeddableList {
         $total = 3;
 
         $users = [
@@ -151,6 +152,6 @@ WHERE `type` = :_user AND `subject` IN (
                 unset($querying[$random]);
         }
 
-        return $results;
+        return new EmbeddableList($results);
     }
 }
