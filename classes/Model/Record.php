@@ -4,9 +4,7 @@ namespace UOPF\Model;
 
 use UOPF\Model;
 use UOPF\Utilities;
-use UOPF\Exception;
 use UOPF\ModelFieldType;
-use UOPF\DatabaseLockType;
 use UOPF\RetrievedEntries;
 use UOPF\Facade\Database;
 use UOPF\Facade\Manager\User as UserManager;
@@ -17,15 +15,6 @@ use WhichBrowser\Parser as WhichBrowserParser;
 use const PREG_SPLIT_DELIM_CAPTURE;
 
 final class Record extends Model {
-    public function fetchImages(): array {
-        return Database::transaction(function () {
-            if (!$locked = RecordManager::fetchEntryDirectly($this->data['id'], lock: DatabaseLockType::read))
-                throw new Exception('Failed to fetch image.');
-
-            return $this->fetchImagesDirectly();
-        });
-    }
-
     public function fetchImagesDirectly(): array {
         $conditions = [
             'status' => 'publish',
@@ -195,12 +184,14 @@ LIMIT {$limitClause};
         if ($this->isLong())
             return null;
 
-        $images = $this->fetchImages();
+        $images = RecordManager::fetchEntryImagesList($this);
 
         if (isset($images[0])) {
+            $image = ImageManager::fetchEntry($images[0]);
+
             return sprintf(
                 '<a data-image="%s">View Image</a>',
-                Utilities::escape($images[0]->getSource())
+                Utilities::escape($image->getSource())
             );
         } else {
             return null;

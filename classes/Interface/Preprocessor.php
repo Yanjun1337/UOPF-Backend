@@ -11,6 +11,7 @@ use UOPF\Model\Topic as TopicModel;
 use UOPF\Model\Record as RecordModel;
 use UOPF\Model\TheCase as CaseModel;
 use UOPF\Model\Relationship as RelationshipModel;
+use UOPF\Facade\Manager\Record as RecordManager;
 use UOPF\Facade\Manager\Relationship\User as UserRelationshipManager;
 use UOPF\Facade\Manager\Relationship\Like as LikeRelationshipManager;
 use UOPF\Facade\Manager\Relationship\Dislike as DislikeRelationshipManager;
@@ -532,9 +533,9 @@ final class Preprocessor {
     protected function preprocessRecordImages(RecordModel $record): EmbeddableList {
         $images = [];
 
-        foreach ($record->fetchImages() as $image) {
+        foreach (RecordManager::fetchEntryImagesList($record) as $image) {
             $images[] = new EmbeddableStructure(
-                $image['id'],
+                $image,
                 [Services::getInstance()->imageManager, 'fetchEntry']
             );
         }

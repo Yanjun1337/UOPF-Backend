@@ -5,10 +5,13 @@ namespace UOPF\Manager;
 use DOMDocument;
 use HTMLPurifier;
 use HTMLPurifier_Config as HTMLPurifierConfiguration;
+use UOPF\Model as UOPFModel;
 use UOPF\Manager;
+use UOPF\Utilities;
 use UOPF\Exception;
 use UOPF\DatabaseLockType;
 use UOPF\Model\Record as Model;
+use UOPF\Facade\Cache;
 use UOPF\Facade\Database;
 use UOPF\Facade\Manager\User as UserManager;
 use UOPF\Facade\Manager\Image as ImageManager;
@@ -397,6 +400,38 @@ final class Record extends Manager {
                 ':step' => $step
             ]);
         });
+    }
+
+    public function fetchEntryImagesList(Model $entry): array {
+        if (($cached = $this->fetchEntryImagesFromCache($entry)) !== null)
+            return $cached;
+
+        return Database::transaction(function () use (&$entry) {
+            if (!$locked = $this->fetchEntryDirectly($entry['id'], lock: DatabaseLockType::read))
+                throw new Exception('Failed to fetch entry');
+
+            $images = Utilities::arrayColumn($locked->fetchImagesDirectly(), 'id');
+
+            $this->cacheEntryImages($locked, $images);
+            return $images;
+        });
+    }
+
+    public function fetchEntryImagesFromCache(Model $entry): ?array {
+        return Cache::get("{$this->cacheNamespace}images/{$entry['id']}");
+    }
+
+    public function cacheEntryImages(Model $entry, array $images): void {
+        Cache::set("{$this->cacheNamespace}images/{$entry['id']}", $images);
+    }
+
+    public function removeEntryImagesFromCache(Model $entry): void {
+        Cache::remove("{$this->cacheNamespace}images/{$entry['id']}");
+    }
+
+    protected function removeEntryFromCache(UOPFModel $entry): void {
+        $this->removeEntryImagesFromCache($entry);
+        parent::removeEntryFromCache($entry);
     }
 
     protected static function sanitizeLongPostContent(string $value, array $images = []): string {
