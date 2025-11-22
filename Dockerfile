@@ -9,7 +9,11 @@ COPY . .
 FROM php:8.4-fpm
 
 RUN mv "${PHP_INI_DIR}/php.ini-production" "${PHP_INI_DIR}/php.ini" && \
-    echo 'variables_order = "EGPCS"' >> "${PHP_INI_DIR}/php.ini"
+    ( \
+        echo 'variables_order = "EGPCS"'; \
+        echo 'upload_max_filesize = 100M'; \
+        echo 'post_max_size = 100M' \
+    ) > "${PHP_INI_DIR}/php.ini"
 
 RUN apt-get update && \
     apt-get install -y mariadb-client && \

@@ -18,6 +18,12 @@ RUN apt-get update && \
     pecl install imagick && \
     docker-php-ext-enable imagick
 
+## Configure PHP
+RUN ( \
+        echo 'upload_max_filesize = 100M'; \
+        echo 'post_max_size = 100M' \
+    ) > "${PHP_INI_DIR}/php.ini"
+
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
