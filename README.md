@@ -1,4 +1,4 @@
-# UOPF
+# Install Informations
 
 The best way to deploy UOPF is to use **Docker Compose**.
 
